@@ -37,6 +37,7 @@ man_y = 17.5
 man_dir = {-1, 0}
 pending_dir = nil
 speed = 4
+clock = 0
 
 man = nil  -- A Character object for the hero.
 characters = {}  -- All moving Character objects = man + ghosts.
@@ -87,10 +88,15 @@ function Character:dot_prod(dir)
   return target_dir[1] * dir[1] + target_dir[2] * dir[2]
 end
 
+function Character:just_turned()
+  return self.last_turn and clock - self.last_turn < 0.2
+end
+
 -- Input is the direction we were previously going in.
 -- We want ghosts to not go directly backwards here.
 function Character:did_stop(old_dir)
   if self.shape == 'hero' then return end
+  if self:just_turned() then return end
   local turn = {old_dir[2], old_dir[1]}
   local sorted_turns = {}  -- First dir here will be our first choice.
   local dot_prod = self:dot_prod(turn)
@@ -101,12 +107,14 @@ function Character:did_stop(old_dir)
   for k, t in pairs(turns) do
     if self:can_go_in_dir(t) then
       self.dir = t
+      self.last_turn = clock
       return
     end
   end
 end
 
 function Character:available_turns()
+  if self:just_turned() then return {} end
   local turn = {self.dir[2], self.dir[1]}
   local turns = {}
   for sign = -1, 1, 2 do
@@ -120,6 +128,7 @@ end
 function Character:turn_if_better(turn)
   if self:dot_prod(turn) > self:dot_prod(self.dir) then
     self.dir = turn
+    self.last_turn = clock
   end
 end
 
@@ -324,6 +333,7 @@ function love.keypressed(key)
 end
 
 function love.update(dt)
+  clock = clock + dt
   for k, character in pairs(characters) do
     character:update(dt)
   end
