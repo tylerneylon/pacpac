@@ -1,3 +1,13 @@
+--[[ main.lua
+
+     Main code for PacPac, a lua-based pac-man clone.
+     There are many pac-man clones. This one is mine.
+  ]]
+
+-------------------------------------------------------------------------------
+-- Declare all globals here.
+-------------------------------------------------------------------------------
+
 map = {{1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
        {1, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 1, 2, 1, 0, 0, 0, 1, 0, 0, 0, 1},
        {1, 0, 1, 1, 0, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 0, 0, 0, 1, 0, 1},
@@ -27,6 +37,93 @@ man_y = 17.5
 man_dir = {-1, 0}
 pending_dir = nil
 speed = 4
+
+man = nil  -- A Character object for the hero.
+characters = {}  -- All moving Character objects = man + ghosts.
+
+-------------------------------------------------------------------------------
+-- Define the Character class.
+-------------------------------------------------------------------------------
+
+Character = {} ; Character.__index = Character
+
+-- shape is 'hero' or 'ghost'; color is in {'red', 'pink', 'blue', 'orange'}.
+function Character.new(shape, color)
+  local c = setmetatable({shape = shape, color = color}, Character)
+  if shape == 'hero' then
+    c.x = 10.5
+    c.y = 17.5
+    c.dir = {-1, 0}
+    c.next_dir = nil
+    c.speed = 4
+  end
+  return c
+end
+
+function Character:snap_into_place()
+  if self.dir[1] == 0 then
+    self.x = math.floor(2 * self.x + 0.5) / 2
+  end
+  if self.dir[2] == 0 then
+    self.y = math.floor(2 * self.y + 0.5) / 2
+  end
+end
+
+function Character:can_go_in_dir(dir)
+  local new_x, new_y = self.x + dir[1], self.y + dir[2]
+  return not xy_hits_a_wall(new_x, new_y)
+end
+
+function Character:update(dt)
+
+  -- Blind movement.
+  self.x = self.x + self.dir[1] * dt * self.speed
+  self.y = self.y + self.dir[2] * dt * self.speed
+  self:snap_into_place()
+
+  -- Step back if we hit a wall.
+  if xy_hits_a_wall(self.x, self.y) then
+    self.dir = {0, 0}
+    self:snap_into_place()
+  end
+
+  -- Check if we should turn.
+  -- This outer guard protects against turns in the side warps.
+  if self.x > 1 and self.x < (#map + 1) then
+    if self.next_dir and self:can_go_in_dir(self.next_dir) then
+      self.dir = self.next_dir
+      self.next_dir = nil
+    end
+  end
+
+  -- Check for side warps.
+  if self.x <= 0.5 then
+    self.x = #map + 1.5
+    self.dir = {-1, 0}
+  elseif self.x >= #map + 1.5 then
+    self.x = 0.5
+    self.dir = {1, 0}
+  end
+
+  if self.shape == 'hero' then
+    local dots_hit = dots_hit_by_man_at_xy(self.x, self.y)
+    for k, v in pairs(dots_hit) do
+      if dots[k] then dots[k] = nil end
+    end
+  end
+end
+
+function Character:draw()
+  love.graphics.setColor(255, 255, 0)
+  love.graphics.circle('fill', self.x * tile_size, self.y * tile_size, tile_size / 2, 10)
+end
+
+man = Character.new('hero', 'yellow')
+table.insert(characters, man)
+
+-------------------------------------------------------------------------------
+-- Non-love functions.
+-------------------------------------------------------------------------------
 
 function str(t)
   if type(t) == 'table' then
@@ -98,24 +195,6 @@ function draw_wall(x, y)
                           tile_size, tile_size)
 end
 
-function draw_man()
-  love.graphics.setColor(255, 255, 0)
-  love.graphics.circle('fill', man_x * tile_size, man_y * tile_size, tile_size / 2, 10)
-end
-
-function love.draw()
-  for x = 1, #map do for y = 1, #(map[1]) do
-    if map[x][y] == 1 then
-      draw_wall(x, y)
-    end
-  end end  -- Loop over x, y.
-
-  -- Draw dots.
-  for k, v in pairs(dots) do draw_one_dot(v[1], v[2]) end
-
-  draw_man()
-end
-
 function pts_hit_by_man_at_xy(x, y)
   local h = 0.45  -- Less than 0.5 to allow turns near intersections.
   local pts = {}
@@ -146,65 +225,36 @@ function xy_hits_a_wall(x, y)
   return false
 end
 
-function can_go_in_dir(dir)
-  local new_x, new_y = man_x + dir[1], man_y + dir[2]
-  return not xy_hits_a_wall(new_x, new_y)
-end
+-------------------------------------------------------------------------------
+-- Love functions.
+-------------------------------------------------------------------------------
 
-function snap_into_place()
-  if man_dir[1] == 0 then
-    man_x = math.floor(2 * man_x + 0.5) / 2
-  end
-  if man_dir[2] == 0 then
-    man_y = math.floor(2 * man_y + 0.5) / 2
-  end
+function love.draw()
+  for x = 1, #map do for y = 1, #(map[1]) do
+    if map[x][y] == 1 then
+      draw_wall(x, y)
+    end
+  end end  -- Loop over x, y.
+
+  -- Draw dots.
+  for k, v in pairs(dots) do draw_one_dot(v[1], v[2]) end
+
+  man:draw()
 end
 
 function love.keypressed(key)
   local dirs = {up = {0, -1}, down = {0, 1}, left = {-1, 0}, right = {1, 0}}
   local dir = dirs[key]
   if dir == nil then return end
-  if can_go_in_dir(dir) then
-    man_dir = dir
+  if man:can_go_in_dir(dir) then
+    man.dir = dir
   else
-    pending_dir = dir
+    man.next_dir = dir
   end
 end
 
 function love.update(dt)
-
-  -- Blind movement.
-  man_x = man_x + man_dir[1] * dt * speed
-  man_y = man_y + man_dir[2] * dt * speed
-  snap_into_place()
-
-  -- Step back if we hit a wall.
-  if xy_hits_a_wall(man_x, man_y) then
-    man_dir = {0, 0}
-    snap_into_place()
+  for k, character in pairs(characters) do
+    character:update(dt)
   end
-
-  -- Check if we should turn.
-  -- This outer guard protects against turns in the side warps.
-  if man_x > 1 and man_x < (#map + 1) then
-    if pending_dir and can_go_in_dir(pending_dir) then
-      man_dir = pending_dir
-      pending_dir = nil
-    end
-  end
-
-  -- Check for side warps.
-  if man_x <= 0.5 then
-    man_x = #map + 1.5
-    man_dir = {-1, 0}
-  elseif man_x >= #map + 1.5 then
-    man_x = 0.5
-    man_dir = {1, 0}
-  end
-
-  local dots_hit = dots_hit_by_man_at_xy(man_x, man_y)
-  for k, v in pairs(dots_hit) do
-    if dots[k] then dots[k] = nil end
-  end
-
 end
