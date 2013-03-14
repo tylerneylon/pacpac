@@ -23,8 +23,8 @@ tile_size = 20
 
 man_x = 10.5
 man_y = 17.5
-man_dx = -1
-man_dy = 0
+man_dir = {-1, 0}
+pending_dir = nil
 speed = 4
 
 function draw_wall(x, y)
@@ -48,7 +48,7 @@ function love.draw()
 end
 
 function pts_hit_by_man_at_xy(x, y)
-  local h = 0.48
+  local h = 0.45  -- Less than 0.5 to allow turns near intersections.
   local pts = {}
   for dx = -1, 1, 2 do for dy = -1, 1, 2 do
     table.insert(pts, {math.floor(x + dx * h), math.floor(y + dy * h)})
@@ -56,37 +56,54 @@ function pts_hit_by_man_at_xy(x, y)
   return pts
 end
 
+function xy_hits_a_wall(x, y)
+  local pts = pts_hit_by_man_at_xy(x, y)
+  for k, v in pairs(pts) do
+    if map[v[1]][v[2]] == 1 then return true end
+  end
+  return false
+end
+
+function can_go_in_dir(dir)
+  local new_x, new_y = man_x + dir[1], man_y + dir[2]
+  return not xy_hits_a_wall(new_x, new_y)
+end
+
 function snap_into_place()
-  if man_dx == 0 then
+  if man_dir[1] == 0 then
     man_x = math.floor(2 * man_x + 0.5) / 2
   end
-  if man_dy == 0 then
+  if man_dir[2] == 0 then
     man_y = math.floor(2 * man_y + 0.5) / 2
   end
 end
 
 function love.update(dt)
   --print('At update start, man_xy=(' .. man_x .. ', ' .. man_y .. ')')
-  man_x = man_x + man_dx * dt * speed
-  man_y = man_y + man_dy * dt * speed
+  man_x = man_x + man_dir[1] * dt * speed
+  man_y = man_y + man_dir[2] * dt * speed
   snap_into_place()
   --print('After xy update, man_xy=(' .. man_x .. ', ' .. man_y .. ')')
 
-  local pts = pts_hit_by_man_at_xy(man_x, man_y)
-  local stopped = false
-  for k, v in pairs(pts) do
-    if map[v[1]][v[2]] == 1 then
-      man_dx = 0
-      man_dy = 0
-      stopped = true
-    end
+  if xy_hits_a_wall(man_x, man_y) then
+    man_dir = {0, 0}
+    snap_into_place()
   end
-  if stopped then snap_into_place() end
+
+  if pending_dir and can_go_in_dir(pending_dir) then
+    man_dir = pending_dir
+    pending_dir = nil
+  end
 end
 
 function love.keypressed(key)
   local dirs = {up = {0, -1}, down = {0, 1}, left = {-1, 0}, right = {1, 0}}
   local dir = dirs[key]
   if dir == nil then return end
-  man_dx, man_dy = dir[1], dir[2]
+  if can_go_in_dir(dir) then
+    man_dir = dir
+  else
+    pending_dir = dir
+  end
 end
+
