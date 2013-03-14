@@ -60,11 +60,27 @@ function Character.new(shape, color)
     c.next_dir = nil
     c.speed = 4
   else
-    c.x = 10.5
-    c.y = 9.5
-    c.dir = {1, 0}
-    c.next_dir = nil
-    c.speed = 4
+    if color == 'red' then
+      c.x = 10.5
+      c.y = 9.5
+      c.dir = {1, 0}
+      c.speed = 4
+    elseif color == 'pink' then
+      c.x = 18.5
+      c.y = 2.5
+      c.dir = {-1, 0}
+      c.speed = 4
+    elseif color == 'blue' then
+      c.x = 2.5
+      c.y = 2.5
+      c.dir = {0, 1}
+      c.speed = 4
+    elseif color == 'orange' then
+      c.x = 10.5
+      c.y = 5.5
+      c.dir = {-1, 0}
+      c.speed = 4
+    end
   end
   return c
 end
@@ -77,11 +93,20 @@ function Character:target()
       return {man.x + man.dir[1] * 4, man.y + man.dir[2] * 4}
     end
   elseif self.color == 'pink' then
-    return {}
+    if ghost_mode == 'scatter' then return {2.5, 2.5} end
+    if ghost_mode == 'pursue' then
+      return {man.x + man.dir[1] * 4, man.y + man.dir[2] * 4}
+    end
   elseif self.color == 'blue' then
-    return {}
+    if ghost_mode == 'scatter' then return {18.5, 21.5} end
+    if ghost_mode == 'pursue' then
+      return {man.x + man.dir[1] * 4, man.y + man.dir[2] * 4}
+    end
   elseif self.color == 'orange' then
-    return {}
+    if ghost_mode == 'scatter' then return {2.5, 21.5} end
+    if ghost_mode == 'pursue' then
+      return {man.x + man.dir[1] * 4, man.y + man.dir[2] * 4}
+    end
   end
 end
 
@@ -198,7 +223,7 @@ end
 
 function Character:draw()
   local colors = {red = {255, 0, 0}, pink = {255, 128, 128},
-                  blue = {0, 64, 255}, orange = {255, 128, 0},
+                  blue = {0, 192, 255}, orange = {255, 128, 0},
                   yellow = {255, 255, 0}}
   local color = colors[self.color]
   love.graphics.setColor(color[1], color[2], color[3])
@@ -215,6 +240,9 @@ man = Character.new('hero', 'yellow')
 table.insert(characters, man)
 
 table.insert(characters, Character.new('ghost', 'red'))
+table.insert(characters, Character.new('ghost', 'pink'))
+table.insert(characters, Character.new('ghost', 'blue'))
+table.insert(characters, Character.new('ghost', 'orange'))
 
 -------------------------------------------------------------------------------
 -- Non-love functions.
