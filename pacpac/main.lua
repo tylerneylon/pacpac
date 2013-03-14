@@ -42,6 +42,8 @@ clock = 0
 man = nil  -- A Character object for the hero.
 characters = {}  -- All moving Character objects = man + ghosts.
 
+ghost_mode = 'scatter'
+
 -------------------------------------------------------------------------------
 -- Define the Character class.
 -------------------------------------------------------------------------------
@@ -63,9 +65,24 @@ function Character.new(shape, color)
     c.dir = {1, 0}
     c.next_dir = nil
     c.speed = 4
-    c.target = {2.5, 2.5}
   end
   return c
+end
+
+function Character:target()
+  if self.shape == 'hero' then return {} end
+  if self.color == 'red' then
+    if ghost_mode == 'scatter' then return {18.5, 2.5} end
+    if ghost_mode == 'pursue' then
+      return {man.x + man.dir[1] * 4, man.y + man.dir[2] * 4}
+    end
+  elseif self.color == 'pink' then
+    return {}
+  elseif self.color == 'blue' then
+    return {}
+  elseif self.color == 'orange' then
+    return {}
+  end
 end
 
 function Character:snap_into_place()
@@ -84,7 +101,8 @@ function Character:can_go_in_dir(dir)
 end
 
 function Character:dot_prod(dir)
-  local target_dir = {self.target[1] - self.x, self.target[2] - self.y}
+  local target = self:target()
+  local target_dir = {target[1] - self.x, target[2] - self.y}
   return target_dir[1] * dir[1] + target_dir[2] * dir[2]
 end
 
@@ -201,6 +219,17 @@ table.insert(characters, Character.new('ghost', 'red'))
 -------------------------------------------------------------------------------
 -- Non-love functions.
 -------------------------------------------------------------------------------
+
+-- Sets ghost_mode to either 'scatter' or 'pursue', based on a 26-second cycle,
+-- where the first 6 seconds are scatter, and the next 20 are pursue.
+function update_ghost_mode()
+  local cycle_point = clock % 26
+  if cycle_point < 6 then
+    ghost_mode = 'scatter'
+  else
+    ghost_mode = 'pursue'
+  end
+end
 
 function str(t)
   if type(t) == 'table' then
@@ -334,6 +363,7 @@ end
 
 function love.update(dt)
   clock = clock + dt
+  update_ghost_mode()
   for k, character in pairs(characters) do
     character:update(dt)
   end
