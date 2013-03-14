@@ -1,23 +1,24 @@
-map = {{1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-       {1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1},
-       {1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1},
+map = {{1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+       {1, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 1, 2, 1, 0, 0, 0, 1, 0, 0, 0, 1},
+       {1, 0, 1, 1, 0, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 0, 0, 0, 1, 0, 1},
        {1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1},
        {1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1},
        {1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1},
        {1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
-       {1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1},
-       {1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
-       {1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1},
+       {1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 2, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
+       {1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1},
        {1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
        {1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1},
        {1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1},
        {1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1},
-       {1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1},
-       {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1}}
+       {1, 0, 1, 1, 0, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 0, 0, 0, 1, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 1, 2, 1, 0, 0, 0, 1, 0, 0, 0, 1},
+       {1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1}}
 
+superdots = nil -- Value given below.
 
 tile_size = 20
 
@@ -26,6 +27,56 @@ man_y = 17.5
 man_dir = {-1, 0}
 pending_dir = nil
 speed = 4
+
+function str(t)
+  if type(t) == 'table' then
+    local s = '{'
+    for i, v in ipairs(t) do
+      if #s > 1 then s = s .. ', ' end
+      s = s .. str(v)
+    end
+    s = s .. '}'
+    return s
+  elseif type(t) == 'number' then
+    return tostring(t)
+  elseif type(t) == 'boolean' then
+    return tostring(t)
+  end
+  return 'unknown type'
+end
+
+-- Turns {a, b} into {[str(a)] = true, [str(b)] = true}.
+-- This is useful for testing if hash[key] for inclusion.
+function hash_from_list(list)
+  local hash = {}
+  for k, v in pairs(list) do hash[str(v)] = true end
+  return hash
+end
+
+superdots = hash_from_list({{2.5, 4}, {18.5, 4}, {2.5, 17.5}, {18.5, 17.5}})
+
+-- The input x, y is the center of the dot in tile-based coordinates.
+function draw_one_dot(x, y)
+  local dot_size = 1
+  if superdots[str({x, y})] then dot_size = 4 end
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.circle('fill',
+                       x * tile_size,
+                       y * tile_size,
+                       dot_size, 10)
+end
+
+-- The input x, y is the integer square location in tile coordinates.
+function draw_dots(x, y)
+  if map[x][y] ~= 0 then return end
+  draw_one_dot(x + 0.5, y + 0.5)
+  if x + 1 <= #map and map[x + 1][y] == 0 then
+    draw_one_dot(x + 1, y + 0.5)
+  end
+  if y + 1 <= #(map[1]) and map[x][y + 1] == 0 then
+    draw_one_dot(x + 0.5, y + 1)
+  end
+end
 
 function draw_wall(x, y)
   -- print('draw_wall(' .. x .. ', ' .. y .. ')')
@@ -41,7 +92,11 @@ end
 
 function love.draw()
   for x = 1, #map do for y = 1, #(map[1]) do
-    if map[x][y] == 1 then draw_wall(x, y) end
+    if map[x][y] == 1 then
+      draw_wall(x, y)
+    else
+      draw_dots(x, y)
+    end
   end end  -- Loop over x, y.
 
   draw_man()
