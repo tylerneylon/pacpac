@@ -59,7 +59,9 @@ end
 function xy_hits_a_wall(x, y)
   local pts = pts_hit_by_man_at_xy(x, y)
   for k, v in pairs(pts) do
-    if map[v[1]][v[2]] == 1 then return true end
+    if v[1] >= 1 and v[1] <= #map then
+      if map[v[1]][v[2]] == 1 then return true end
+    end
   end
   return false
 end
@@ -90,9 +92,20 @@ function love.update(dt)
     snap_into_place()
   end
 
-  if pending_dir and can_go_in_dir(pending_dir) then
-    man_dir = pending_dir
-    pending_dir = nil
+  -- This outer guard protects against turns in the side warps.
+  if man_x > 1 and man_x < (#map + 1) then
+    if pending_dir and can_go_in_dir(pending_dir) then
+      man_dir = pending_dir
+      pending_dir = nil
+    end
+  end
+
+  if man_x <= 0.5 then
+    man_x = #map + 1.5
+    man_dir = {-1, 0}
+  elseif man_x >= #map + 1.5 then
+    man_x = 0.5
+    man_dir = {1, 0}
   end
 end
 
