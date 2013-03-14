@@ -56,6 +56,13 @@ function Character.new(shape, color)
     c.dir = {-1, 0}
     c.next_dir = nil
     c.speed = 4
+  else
+    c.x = 10.5
+    c.y = 9.5
+    c.dir = {1, 0}
+    c.next_dir = nil
+    c.speed = 4
+    c.target = {2.5, 2.5}
   end
   return c
 end
@@ -74,6 +81,26 @@ function Character:can_go_in_dir(dir)
   return not xy_hits_a_wall(new_x, new_y)
 end
 
+-- Input is the direction we were previously going in.
+-- We want ghosts to not go directly backwards here.
+function Character:did_stop(old_dir)
+  if self.shape == 'hero' then return end
+  local turn = {old_dir[2], old_dir[1]}
+  local sorted_turns = {}  -- First dir here will be our first choice.
+  local target_dir = {self.target[1] - self.x, self.target[2] - self.y}
+  local dot_prod = target_dir[1] * turn[1] + target_dir[2] * turn[2]
+  local sign = 1
+  if dot_prod < 0 then sign = -1 end
+  local turns = {{turn[1] * sign, turn[2] * sign},
+                 {turn[1] * sign * -1, turn[2] * sign * -1}}
+  for k, t in pairs(turns) do
+    if self:can_go_in_dir(t) then
+      self.dir = t
+      return
+    end
+  end
+end
+
 function Character:update(dt)
 
   -- Blind movement.
@@ -83,8 +110,10 @@ function Character:update(dt)
 
   -- Step back if we hit a wall.
   if xy_hits_a_wall(self.x, self.y) then
+    local old_dir = self.dir
     self.dir = {0, 0}
     self:snap_into_place()
+    self:did_stop(old_dir)
   end
 
   -- Check if we should turn.
@@ -114,12 +143,24 @@ function Character:update(dt)
 end
 
 function Character:draw()
-  love.graphics.setColor(255, 255, 0)
-  love.graphics.circle('fill', self.x * tile_size, self.y * tile_size, tile_size / 2, 10)
+  local colors = {red = {255, 0, 0}, pink = {255, 128, 128},
+                  blue = {0, 64, 255}, orange = {255, 128, 0},
+                  yellow = {255, 255, 0}}
+  local color = colors[self.color]
+  love.graphics.setColor(color[1], color[2], color[3])
+  if self.shape == 'hero' then
+    love.graphics.circle('fill', self.x * tile_size,
+                         self.y * tile_size, tile_size / 2, 10)
+  else
+    love.graphics.circle('fill', self.x * tile_size,
+                         self.y * tile_size, tile_size / 2, 10)
+  end
 end
 
 man = Character.new('hero', 'yellow')
 table.insert(characters, man)
+
+table.insert(characters, Character.new('ghost', 'red'))
 
 -------------------------------------------------------------------------------
 -- Non-love functions.
@@ -239,7 +280,9 @@ function love.draw()
   -- Draw dots.
   for k, v in pairs(dots) do draw_one_dot(v[1], v[2]) end
 
-  man:draw()
+  for k, character in pairs(characters) do
+    character:draw()
+  end
 end
 
 function love.keypressed(key)
