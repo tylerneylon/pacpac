@@ -45,11 +45,11 @@ function str(t)
   return 'unknown type'
 end
 
--- Turns {a, b} into {[str(a)] = true, [str(b)] = true}.
+-- Turns {a, b} into {[str(a)] = a, [str(b)] = b}.
 -- This is useful for testing if hash[key] for inclusion.
 function hash_from_list(list)
   local hash = {}
-  for k, v in pairs(list) do hash[str(v)] = true end
+  for k, v in pairs(list) do hash[str(v)] = v end
   return hash
 end
 
@@ -125,6 +125,17 @@ function pts_hit_by_man_at_xy(x, y)
   return pts
 end
 
+-- Returns a hash set of the dot pts nearby, whether or not a dot is there.
+function dots_hit_by_man_at_xy(x, y)
+  local pts = pts_hit_by_man_at_xy(2 * x + 0.5, 2 * y + 0.5)
+  local dots = {}
+  for k, v in pairs(pts) do
+    local pt = {v[1] / 2, v[2] / 2}
+    dots[str(pt)] = pt
+  end
+  return dots
+end
+
 function xy_hits_a_wall(x, y)
   local pts = pts_hit_by_man_at_xy(x, y)
   for k, v in pairs(pts) do
@@ -149,35 +160,6 @@ function snap_into_place()
   end
 end
 
-function love.update(dt)
-  --print('At update start, man_xy=(' .. man_x .. ', ' .. man_y .. ')')
-  man_x = man_x + man_dir[1] * dt * speed
-  man_y = man_y + man_dir[2] * dt * speed
-  snap_into_place()
-  --print('After xy update, man_xy=(' .. man_x .. ', ' .. man_y .. ')')
-
-  if xy_hits_a_wall(man_x, man_y) then
-    man_dir = {0, 0}
-    snap_into_place()
-  end
-
-  -- This outer guard protects against turns in the side warps.
-  if man_x > 1 and man_x < (#map + 1) then
-    if pending_dir and can_go_in_dir(pending_dir) then
-      man_dir = pending_dir
-      pending_dir = nil
-    end
-  end
-
-  if man_x <= 0.5 then
-    man_x = #map + 1.5
-    man_dir = {-1, 0}
-  elseif man_x >= #map + 1.5 then
-    man_x = 0.5
-    man_dir = {1, 0}
-  end
-end
-
 function love.keypressed(key)
   local dirs = {up = {0, -1}, down = {0, 1}, left = {-1, 0}, right = {1, 0}}
   local dir = dirs[key]
@@ -189,3 +171,40 @@ function love.keypressed(key)
   end
 end
 
+function love.update(dt)
+
+  -- Blind movement.
+  man_x = man_x + man_dir[1] * dt * speed
+  man_y = man_y + man_dir[2] * dt * speed
+  snap_into_place()
+
+  -- Step back if we hit a wall.
+  if xy_hits_a_wall(man_x, man_y) then
+    man_dir = {0, 0}
+    snap_into_place()
+  end
+
+  -- Check if we should turn.
+  -- This outer guard protects against turns in the side warps.
+  if man_x > 1 and man_x < (#map + 1) then
+    if pending_dir and can_go_in_dir(pending_dir) then
+      man_dir = pending_dir
+      pending_dir = nil
+    end
+  end
+
+  -- Check for side warps.
+  if man_x <= 0.5 then
+    man_x = #map + 1.5
+    man_dir = {-1, 0}
+  elseif man_x >= #map + 1.5 then
+    man_x = 0.5
+    man_dir = {1, 0}
+  end
+
+  local dots_hit = dots_hit_by_man_at_xy(man_x, man_y)
+  for k, v in pairs(dots_hit) do
+    if dots[k] then dots[k] = nil end
+  end
+
+end
