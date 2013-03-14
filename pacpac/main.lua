@@ -77,8 +77,14 @@ function Character:snap_into_place()
 end
 
 function Character:can_go_in_dir(dir)
+  if dir == nil then return false end
   local new_x, new_y = self.x + dir[1], self.y + dir[2]
   return not xy_hits_a_wall(new_x, new_y)
+end
+
+function Character:dot_prod(dir)
+  local target_dir = {self.target[1] - self.x, self.target[2] - self.y}
+  return target_dir[1] * dir[1] + target_dir[2] * dir[2]
 end
 
 -- Input is the direction we were previously going in.
@@ -87,8 +93,7 @@ function Character:did_stop(old_dir)
   if self.shape == 'hero' then return end
   local turn = {old_dir[2], old_dir[1]}
   local sorted_turns = {}  -- First dir here will be our first choice.
-  local target_dir = {self.target[1] - self.x, self.target[2] - self.y}
-  local dot_prod = target_dir[1] * turn[1] + target_dir[2] * turn[2]
+  local dot_prod = self:dot_prod(turn)
   local sign = 1
   if dot_prod < 0 then sign = -1 end
   local turns = {{turn[1] * sign, turn[2] * sign},
@@ -101,6 +106,23 @@ function Character:did_stop(old_dir)
   end
 end
 
+function Character:available_turns()
+  local turn = {self.dir[2], self.dir[1]}
+  local turns = {}
+  for sign = -1, 1, 2 do
+    local t = {turn[1] * sign, turn[2] * sign}
+    if self:can_go_in_dir(t) then table.insert(turns, t) end
+  end
+  return turns
+end
+
+-- Switch self.dir to dir if it is more aligned with getting to the target.
+function Character:turn_if_better(turn)
+  if self:dot_prod(turn) > self:dot_prod(self.dir) then
+    self.dir = turn
+  end
+end
+
 function Character:update(dt)
 
   -- Blind movement.
@@ -109,7 +131,8 @@ function Character:update(dt)
   self:snap_into_place()
 
   -- Step back if we hit a wall.
-  if xy_hits_a_wall(self.x, self.y) then
+  local did_hit_wall = xy_hits_a_wall(self.x, self.y)
+  if did_hit_wall then
     local old_dir = self.dir
     self.dir = {0, 0}
     self:snap_into_place()
@@ -119,9 +142,13 @@ function Character:update(dt)
   -- Check if we should turn.
   -- This outer guard protects against turns in the side warps.
   if self.x > 1 and self.x < (#map + 1) then
-    if self.next_dir and self:can_go_in_dir(self.next_dir) then
+    if self.shape == 'hero' and self:can_go_in_dir(self.next_dir) then
       self.dir = self.next_dir
       self.next_dir = nil
+    end
+    if self.shape == 'ghost' and not did_hit_wall then
+      local turns = self:available_turns()
+      for k, t in pairs(turns) do self:turn_if_better(t) end
     end
   end
 
