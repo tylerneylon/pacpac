@@ -53,7 +53,28 @@ function hash_from_list(list)
   return hash
 end
 
-superdots = hash_from_list({{2.5, 4}, {18.5, 4}, {2.5, 17.5}, {18.5, 17.5}})
+function love.load()
+  superdots = hash_from_list({{2.5, 4}, {18.5, 4}, {2.5, 17.5}, {18.5, 17.5}})
+
+  -- This will be a hash set of all dot locations.
+  dots = {}
+ 
+  -- Inner functions to help find the dot locations.
+  -- The input x, y is the integer square location in tile coordinates.
+  function add_dots(x, y)
+    if map[x][y] ~= 0 then return end
+    add_one_dot(x + 0.5, y + 0.5)
+    if x + 1 <= #map and map[x + 1][y] == 0 then
+      add_one_dot(x + 1, y + 0.5)
+    end
+    if y + 1 <= #(map[1]) and map[x][y + 1] == 0 then
+      add_one_dot(x + 0.5, y + 1)
+    end
+  end
+  function add_one_dot(x, y) dots[str({x, y})] = {x, y} end
+
+  for x = 1, #map do for y = 1, #(map[1]) do add_dots(x, y) end end
+end
 
 -- The input x, y is the center of the dot in tile-based coordinates.
 function draw_one_dot(x, y)
@@ -66,16 +87,8 @@ function draw_one_dot(x, y)
                        dot_size, 10)
 end
 
--- The input x, y is the integer square location in tile coordinates.
-function draw_dots(x, y)
-  if map[x][y] ~= 0 then return end
-  draw_one_dot(x + 0.5, y + 0.5)
-  if x + 1 <= #map and map[x + 1][y] == 0 then
-    draw_one_dot(x + 1, y + 0.5)
-  end
-  if y + 1 <= #(map[1]) and map[x][y + 1] == 0 then
-    draw_one_dot(x + 0.5, y + 1)
-  end
+function draw_dots()
+  for k, v in pairs(dots) do draw_one_dot(v[1], v[2]) end
 end
 
 function draw_wall(x, y)
@@ -94,10 +107,11 @@ function love.draw()
   for x = 1, #map do for y = 1, #(map[1]) do
     if map[x][y] == 1 then
       draw_wall(x, y)
-    else
-      draw_dots(x, y)
     end
   end end  -- Loop over x, y.
+
+  -- Draw dots.
+  for k, v in pairs(dots) do draw_one_dot(v[1], v[2]) end
 
   draw_man()
 end
