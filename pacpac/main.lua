@@ -302,6 +302,17 @@ function Character:draw()
     if not self:is_dead() then
       love.graphics.circle('fill', self.x * tile_size,
                            self.y * tile_size, tile_size / 2, 10)
+      local vertices = {(self.x + 0.5) * tile_size, self.y * tile_size,
+                        (self.x - 0.5) * tile_size, self.y * tile_size}
+      local n = 5
+      local left = (self.x - 0.5) * tile_size
+      local bottom = (self.y + 0.4) * tile_size
+      for i = 0, n - 1 do
+        local dy = 2 * (1 - (i % 2) * 2)
+        table.insert(vertices, left + (i / (n - 1)) * tile_size)
+        table.insert(vertices, bottom + dy)
+      end
+      love.graphics.polygon('fill', vertices)
     end
     -- Draw the eyes.
     love.graphics.setColor(255, 255, 255)
