@@ -43,6 +43,7 @@ message = ""
 show_message_till = -1
 pause_till = -1
 game_over = false
+super_mode_till = -1
 
 man = nil  -- A Character object for the hero.
 red = nil
@@ -238,7 +239,12 @@ function Character:update(dt)
   if self.shape == 'hero' then
     local dots_hit = dots_hit_by_man_at_xy(self.x, self.y)
     for k, v in pairs(dots_hit) do
-      if dots[k] then dots[k] = nil end
+      if dots[k] then
+        if superdots[k] then
+          super_mode_till = clock + 6.0
+        end
+        dots[k] = nil
+      end
     end
   end
 end
@@ -255,6 +261,9 @@ function Character:draw()
     love.graphics.circle('fill', self.x * tile_size,
                          self.y * tile_size, tile_size / 2, 10)
   else
+    if super_mode_till > clock then
+      love.graphics.setColor(0, 0, 255)
+    end
     love.graphics.circle('fill', self.x * tile_size,
                          self.y * tile_size, tile_size / 2, 10)
   end
