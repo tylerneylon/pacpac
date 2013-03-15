@@ -100,6 +100,9 @@ end
 
 function Character:target()
   if self.shape == 'hero' then return {} end
+  if super_mode_till > clock then
+    return {math.random() * 19, math.random() * 22}
+  end
   if self.color == 'red' then
     if ghost_mode == 'scatter' then return {18.5, 2.5} end
     if ghost_mode == 'pursue' then
