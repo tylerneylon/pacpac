@@ -266,6 +266,19 @@ function Character:draw()
     end
     love.graphics.circle('fill', self.x * tile_size,
                          self.y * tile_size, tile_size / 2, 10)
+    -- Draw the eyes.
+    love.graphics.setColor(255, 255, 255)
+    for i = -1, 1, 2 do
+      local dx = i * 4
+      love.graphics.circle('fill', self.x * tile_size + dx,
+                           (self.y - 0.1) * tile_size, 3.0, 10)
+    end
+    love.graphics.setColor(0, 0, 192)
+    for i = -1, 1, 2 do
+      local dx = i * 4
+      love.graphics.circle('fill', self.x * tile_size + dx + self.dir[1],
+                           (self.y - 0.1) * tile_size + self.dir[2], 2.0, 10)
+    end
   end
 end
 
