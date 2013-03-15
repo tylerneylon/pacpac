@@ -269,8 +269,23 @@ function Character:draw()
   local color = colors[self.color]
   love.graphics.setColor(color[1], color[2], color[3])
   if self.shape == 'hero' then
-    love.graphics.circle('fill', self.x * tile_size,
-                         self.y * tile_size, tile_size / 2, 10)
+    local p = 0.15
+    local max = 1.0
+    if self.always_draw then
+      local mouth_angle = max
+      local start = math.atan2(0, -1)
+      love.graphics.arc('fill', self.x * tile_size, self.y * tile_size,
+                        tile_size / 2,
+                        start + mouth_angle / 2,
+                        start + 2 * math.pi - mouth_angle / 2, 10)
+    else
+      local mouth_angle = max * (math.sin((clock % p) / p * 2 * math.pi) + 1.0)
+      local start = math.atan2(self.dir[2], self.dir[1])
+      love.graphics.arc('fill', self.x * tile_size, self.y * tile_size,
+                        tile_size / 2,
+                        start + mouth_angle / 2,
+                        start + 2 * math.pi - mouth_angle / 2, 10)
+    end
   else
     if super_mode_till > clock then
       love.graphics.setColor(0, 0, 255)
