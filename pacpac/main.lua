@@ -99,6 +99,7 @@ end
 
 function Character:speed()
   if self.shape == 'hero' then return 4 end
+  if self:is_dead() then return 6 end
   if super_mode_till > clock then
     return 3
   else
