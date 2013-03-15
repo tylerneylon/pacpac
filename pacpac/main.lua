@@ -45,6 +45,8 @@ characters = {}  -- All moving Character objects = man + ghosts.
 
 ghost_mode = 'scatter'
 
+lives_left = 3
+
 -------------------------------------------------------------------------------
 -- Define the Character class.
 -------------------------------------------------------------------------------
@@ -371,6 +373,15 @@ function xy_hits_a_wall(x, y)
   return false
 end
 
+function draw_lives_left()
+  local char = Character.new('hero', 'yellow')
+  char.y = 24
+  for i = 1, lives_left - 1 do
+    char.x = 0.5 + 1.2 * i
+    char:draw()
+  end
+end
+
 -------------------------------------------------------------------------------
 -- Love functions.
 -------------------------------------------------------------------------------
@@ -388,6 +399,8 @@ function love.draw()
   for k, character in pairs(characters) do
     character:draw()
   end
+
+  draw_lives_left()
 end
 
 function love.keypressed(key)
