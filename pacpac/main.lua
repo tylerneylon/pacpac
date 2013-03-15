@@ -96,12 +96,12 @@ function Character:target()
   elseif self.color == 'pink' then
     if ghost_mode == 'scatter' then return {2.5, 2.5} end
     if ghost_mode == 'pursue' then
-      return {man.x + man.dir[1] * 4, man.y + man.dir[2] * 4}
+      return {man.x + man.dir[1] * 2, man.y + man.dir[2] * 2}
     end
   elseif self.color == 'blue' then
     if ghost_mode == 'scatter' then return {18.5, 21.5} end
     if ghost_mode == 'pursue' then
-      local v1 = {man.x + man.dir[1] * 2, man.y + man.dir[2] * 2}
+      local v1 = {man.x + man.dir[1], man.y + man.dir[2]}
       local v2 = {v1[1] - red.x, v1[2] - red.y}
       return {v1[1] + v2[1], v1[2] + v2[2]}
     end
