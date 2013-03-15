@@ -174,7 +174,6 @@ end
 -- We want ghosts to not go directly backwards here.
 function Character:did_stop(old_dir)
   if self.shape == 'hero' then return end
-  if self:just_turned() then return end
   local turn = {old_dir[2], old_dir[1]}
   local sorted_turns = {}  -- First dir here will be our first choice.
   local dot_prod = self:dot_prod(turn)
