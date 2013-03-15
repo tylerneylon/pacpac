@@ -42,6 +42,7 @@ clock = 0
 message = ""
 show_message_till = -1
 pause_till = -1
+game_over = false
 
 man = nil  -- A Character object for the hero.
 red = nil
@@ -243,6 +244,7 @@ function Character:update(dt)
 end
 
 function Character:draw()
+  if game_over then return end
   if not self.always_draw and pause_till > clock then return end
   local colors = {red = {255, 0, 0}, pink = {255, 128, 128},
                   blue = {0, 224, 255}, orange = {255, 128, 0},
@@ -405,6 +407,13 @@ function check_for_death()
       message = "oops"
       show_message_till = clock + 3.0
       pause_till = clock + 3.0
+
+      if lives_left == 0 then
+        message = "Game Over"
+        show_message_till = math.huge
+        pause_till = math.huge
+        game_over = true
+      end
 
       -- Move the ghosts and the hero back home.
       for k, character in pairs(characters) do character:go_home() end
