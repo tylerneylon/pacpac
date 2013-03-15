@@ -36,7 +36,6 @@ man_x = 10.5
 man_y = 17.5
 man_dir = {-1, 0}
 pending_dir = nil
-speed = 4
 clock = 0
 
 message = ""
@@ -62,8 +61,13 @@ Character = {} ; Character.__index = Character
 -- shape is 'hero' or 'ghost'; color is in {'red', 'pink', 'blue', 'orange'}.
 function Character.new(shape, color)
   local c = setmetatable({shape = shape, color = color}, Character)
+  c.dead_till = -1
   c:go_home()
   return c
+end
+
+function Character:is_dead()
+  return self.dead_till > clock
 end
 
 function Character:go_home()
@@ -72,29 +76,33 @@ function Character:go_home()
     self.y = 17.5
     self.dir = {-1, 0}
     self.next_dir = nil
-    self.speed = 4
   else
     if self.color == 'red' then
       self.x = 10.5
       self.y = 9.5
       self.dir = {1, 0}
-      self.speed = 4
     elseif self.color == 'pink' then
       self.x = 18.5
       self.y = 2.5
       self.dir = {-1, 0}
-      self.speed = 4
     elseif self.color == 'blue' then
       self.x = 2.5
       self.y = 2.5
       self.dir = {0, 1}
-      self.speed = 4
     elseif self.color == 'orange' then
       self.x = 10.5
       self.y = 5.5
       self.dir = {-1, 0}
-      self.speed = 4
     end
+  end
+end
+
+function Character:speed()
+  if self.shape == 'hero' then return 4 end
+  if super_mode_till > clock then
+    return 3
+  else
+    return 4
   end
 end
 
@@ -204,8 +212,8 @@ function Character:update(dt)
   if pause_till > clock then return end
 
   -- Blind movement.
-  self.x = self.x + self.dir[1] * dt * self.speed
-  self.y = self.y + self.dir[2] * dt * self.speed
+  self.x = self.x + self.dir[1] * dt * self:speed()
+  self.y = self.y + self.dir[2] * dt * self:speed()
   self:snap_into_place()
 
   -- Step back if we hit a wall.
@@ -267,8 +275,10 @@ function Character:draw()
     if super_mode_till > clock then
       love.graphics.setColor(0, 0, 255)
     end
-    love.graphics.circle('fill', self.x * tile_size,
-                         self.y * tile_size, tile_size / 2, 10)
+    if not self:is_dead() then
+      love.graphics.circle('fill', self.x * tile_size,
+                           self.y * tile_size, tile_size / 2, 10)
+    end
     -- Draw the eyes.
     love.graphics.setColor(255, 255, 255)
     for i = -1, 1, 2 do
@@ -276,7 +286,8 @@ function Character:draw()
       love.graphics.circle('fill', self.x * tile_size + dx,
                            (self.y - 0.1) * tile_size, 3.0, 10)
     end
-    if super_mode_till <= clock then
+    if super_mode_till <= clock or self:is_dead() then
+      -- Draw the iris/pupil part.
       love.graphics.setColor(0, 0, 192)
       for i = -1, 1, 2 do
         local dx = i * 4
@@ -300,6 +311,7 @@ function Character:draw()
 end
 
 function Character:dist(other)
+  if other:is_dead() then return math.huge end
   local dist_v = {other.x - self.x, other.y - self.y}
   return math.sqrt(dist_v[1] * dist_v[1] + dist_v[2] * dist_v[2])
 end
@@ -439,23 +451,27 @@ function draw_lives_left()
   end
 end
 
-function check_for_death()
+function check_for_hit()
   for k, character in pairs(characters) do
     if character ~= man and man:dist(character) < 0.5 then
-      lives_left = lives_left - 1
-      message = "oops"
-      show_message_till = clock + 3.0
-      pause_till = clock + 3.0
+      if super_mode_till > clock then
+        character.dead_till = clock + 6.0
+      else
+        lives_left = lives_left - 1
+        message = "oops"
+        show_message_till = clock + 3.0
+        pause_till = clock + 3.0
 
-      if lives_left == 0 then
-        message = "Game Over"
-        show_message_till = math.huge
-        pause_till = math.huge
-        game_over = true
+        if lives_left == 0 then
+          message = "Game Over"
+          show_message_till = math.huge
+          pause_till = math.huge
+          game_over = true
+        end
+
+        -- Move the ghosts and the hero back home.
+        for k, character in pairs(characters) do character:go_home() end
       end
-
-      -- Move the ghosts and the hero back home.
-      for k, character in pairs(characters) do character:go_home() end
     end
   end
 end
@@ -505,5 +521,5 @@ function love.update(dt)
   for k, character in pairs(characters) do
     character:update(dt)
   end
-  check_for_death()
+  check_for_hit()
 end
