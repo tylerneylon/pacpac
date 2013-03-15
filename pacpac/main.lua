@@ -29,6 +29,7 @@ map = {{1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1}}
 
 superdots = nil -- Value given below.
+num_dots = 0
 
 tile_size = 20
 
@@ -99,7 +100,7 @@ end
 
 function Character:speed()
   if self.shape == 'hero' then return 4 end
-  if self:is_dead() then return 6 end
+  if self:is_dead() then return 8 end
   if super_mode_till > clock then
     return 3
   else
@@ -256,6 +257,13 @@ function Character:update(dt)
           super_mode_till = clock + 6.0
         end
         dots[k] = nil
+        num_dots = num_dots - 1
+        if num_dots == 0 then
+          game_over = true
+          message = "You Win! w00t"
+          show_message_till = math.huge
+          paused_till = math.huge
+        end
       end
     end
   end
@@ -400,7 +408,10 @@ function love.load()
       add_one_dot(x + 0.5, y + 1)
     end
   end
-  function add_one_dot(x, y) dots[str({x, y})] = {x, y} end
+  function add_one_dot(x, y)
+    dots[str({x, y})] = {x, y}
+    num_dots = num_dots + 1
+  end
 
   for x = 1, #map do for y = 1, #(map[1]) do add_dots(x, y) end end
 end
