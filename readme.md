@@ -11,3 +11,5 @@ to prove to my wife that I could make something like pac-man in less than a day.
 (She was quite skeptical.)
 
 Here's a fun [evolution of the game in screenshots](http://tylerneylon.com/pacpac/).
+
+You need [love](http://love2d.ord) to play.
