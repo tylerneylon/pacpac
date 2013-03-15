@@ -39,6 +39,10 @@ pending_dir = nil
 speed = 4
 clock = 0
 
+message = ""
+show_message_till = -1
+pause_till = -1
+
 man = nil  -- A Character object for the hero.
 red = nil
 characters = {}  -- All moving Character objects = man + ghosts.
@@ -56,36 +60,40 @@ Character = {} ; Character.__index = Character
 -- shape is 'hero' or 'ghost'; color is in {'red', 'pink', 'blue', 'orange'}.
 function Character.new(shape, color)
   local c = setmetatable({shape = shape, color = color}, Character)
-  if shape == 'hero' then
-    c.x = 10.5
-    c.y = 17.5
-    c.dir = {-1, 0}
-    c.next_dir = nil
-    c.speed = 4
+  c:go_home()
+  return c
+end
+
+function Character:go_home()
+  if self.shape == 'hero' then
+    self.x = 10.5
+    self.y = 17.5
+    self.dir = {-1, 0}
+    self.next_dir = nil
+    self.speed = 4
   else
-    if color == 'red' then
-      c.x = 10.5
-      c.y = 9.5
-      c.dir = {1, 0}
-      c.speed = 4
-    elseif color == 'pink' then
-      c.x = 18.5
-      c.y = 2.5
-      c.dir = {-1, 0}
-      c.speed = 4
-    elseif color == 'blue' then
-      c.x = 2.5
-      c.y = 2.5
-      c.dir = {0, 1}
-      c.speed = 4
-    elseif color == 'orange' then
-      c.x = 10.5
-      c.y = 5.5
-      c.dir = {-1, 0}
-      c.speed = 4
+    if self.color == 'red' then
+      self.x = 10.5
+      self.y = 9.5
+      self.dir = {1, 0}
+      self.speed = 4
+    elseif self.color == 'pink' then
+      self.x = 18.5
+      self.y = 2.5
+      self.dir = {-1, 0}
+      self.speed = 4
+    elseif self.color == 'blue' then
+      self.x = 2.5
+      self.y = 2.5
+      self.dir = {0, 1}
+      self.speed = 4
+    elseif self.color == 'orange' then
+      self.x = 10.5
+      self.y = 5.5
+      self.dir = {-1, 0}
+      self.speed = 4
     end
   end
-  return c
 end
 
 function Character:target()
@@ -188,6 +196,7 @@ function Character:turn_if_better(turn)
 end
 
 function Character:update(dt)
+  if pause_till > clock then return end
 
   -- Blind movement.
   self.x = self.x + self.dir[1] * dt * self.speed
@@ -234,6 +243,7 @@ function Character:update(dt)
 end
 
 function Character:draw()
+  if not self.always_draw and pause_till > clock then return end
   local colors = {red = {255, 0, 0}, pink = {255, 128, 128},
                   blue = {0, 224, 255}, orange = {255, 128, 0},
                   yellow = {255, 255, 0}}
@@ -246,6 +256,11 @@ function Character:draw()
     love.graphics.circle('fill', self.x * tile_size,
                          self.y * tile_size, tile_size / 2, 10)
   end
+end
+
+function Character:dist(other)
+  local dist_v = {other.x - self.x, other.y - self.y}
+  return math.sqrt(dist_v[1] * dist_v[1] + dist_v[2] * dist_v[2])
 end
 
 man = Character.new('hero', 'yellow')
@@ -376,10 +391,31 @@ end
 function draw_lives_left()
   local char = Character.new('hero', 'yellow')
   char.y = 24
+  char.always_draw = true
   for i = 1, lives_left - 1 do
     char.x = 0.5 + 1.2 * i
     char:draw()
   end
+end
+
+function check_for_death()
+  for k, character in pairs(characters) do
+    if character ~= man and man:dist(character) < 0.5 then
+      lives_left = lives_left - 1
+      message = "oops"
+      show_message_till = clock + 3.0
+      pause_till = clock + 3.0
+
+      -- Move the ghosts and the hero back home.
+      for k, character in pairs(characters) do character:go_home() end
+    end
+  end
+end
+
+function draw_message()
+  if show_message_till < clock then return end 
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.print(message, 8 * tile_size, 23.5 * tile_size)
 end
 
 -------------------------------------------------------------------------------
@@ -401,6 +437,7 @@ function love.draw()
   end
 
   draw_lives_left()
+  draw_message()
 end
 
 function love.keypressed(key)
@@ -420,4 +457,5 @@ function love.update(dt)
   for k, character in pairs(characters) do
     character:update(dt)
   end
+  check_for_death()
 end
