@@ -273,11 +273,25 @@ function Character:draw()
       love.graphics.circle('fill', self.x * tile_size + dx,
                            (self.y - 0.1) * tile_size, 3.0, 10)
     end
-    love.graphics.setColor(0, 0, 192)
-    for i = -1, 1, 2 do
-      local dx = i * 4
-      love.graphics.circle('fill', self.x * tile_size + dx + self.dir[1],
-                           (self.y - 0.1) * tile_size + self.dir[2], 2.0, 10)
+    if super_mode_till <= clock then
+      love.graphics.setColor(0, 0, 192)
+      for i = -1, 1, 2 do
+        local dx = i * 4
+        love.graphics.circle('fill', self.x * tile_size + dx + self.dir[1],
+                             (self.y - 0.1) * tile_size + self.dir[2], 2.0, 10)
+      end
+    else
+      -- We're in super mode.
+      local base = {self.x * tile_size - 4.5, self.y * tile_size + 5}
+      local last_pt = nil
+      for i = 0, 6 do
+        local dy = (i % 2) * 2 - 1
+        local pt = {base[1] + i * 1.5, base[2] - dy}
+        if last_pt then
+          love.graphics.line(last_pt[1], last_pt[2], pt[1], pt[2])
+        end
+        last_pt = pt
+      end
     end
   end
 end
