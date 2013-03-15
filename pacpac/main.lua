@@ -110,6 +110,7 @@ end
 
 function Character:target()
   if self.shape == 'hero' then return {} end
+  if self:is_dead() then return {10.5, 9.5} end
   if super_mode_till > clock then
     return {math.random() * 19, math.random() * 22}
   end
