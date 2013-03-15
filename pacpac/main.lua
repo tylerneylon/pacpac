@@ -40,6 +40,7 @@ speed = 4
 clock = 0
 
 man = nil  -- A Character object for the hero.
+red = nil
 characters = {}  -- All moving Character objects = man + ghosts.
 
 ghost_mode = 'scatter'
@@ -90,7 +91,7 @@ function Character:target()
   if self.color == 'red' then
     if ghost_mode == 'scatter' then return {18.5, 2.5} end
     if ghost_mode == 'pursue' then
-      return {man.x + man.dir[1] * 4, man.y + man.dir[2] * 4}
+      return {man.x, man.y}
     end
   elseif self.color == 'pink' then
     if ghost_mode == 'scatter' then return {2.5, 2.5} end
@@ -100,12 +101,21 @@ function Character:target()
   elseif self.color == 'blue' then
     if ghost_mode == 'scatter' then return {18.5, 21.5} end
     if ghost_mode == 'pursue' then
-      return {man.x + man.dir[1] * 4, man.y + man.dir[2] * 4}
+      local v1 = {man.x + man.dir[1] * 2, man.y + man.dir[2] * 2}
+      local v2 = {v1[1] - red.x, v1[2] - red.y}
+      return {v1[1] + v2[1], v1[2] + v2[2]}
     end
   elseif self.color == 'orange' then
-    if ghost_mode == 'scatter' then return {2.5, 21.5} end
+    local default = {2.5, 21.5}
+    if ghost_mode == 'scatter' then return default end
     if ghost_mode == 'pursue' then
-      return {man.x + man.dir[1] * 4, man.y + man.dir[2] * 4}
+      local dist_v = {self.x - man.x, self.y - man.y}
+      local dist_sq = dist_v[1] * dist_v[1] + dist_v[2] * dist_v[2]
+      if dist_sq > 16 then
+        return {man.x, man.y}
+      else
+        return default
+      end
     end
   end
 end
@@ -223,7 +233,7 @@ end
 
 function Character:draw()
   local colors = {red = {255, 0, 0}, pink = {255, 128, 128},
-                  blue = {0, 192, 255}, orange = {255, 128, 0},
+                  blue = {0, 224, 255}, orange = {255, 128, 0},
                   yellow = {255, 255, 0}}
   local color = colors[self.color]
   love.graphics.setColor(color[1], color[2], color[3])
@@ -239,7 +249,9 @@ end
 man = Character.new('hero', 'yellow')
 table.insert(characters, man)
 
-table.insert(characters, Character.new('ghost', 'red'))
+red = Character.new('ghost', 'red')
+table.insert(characters, red)
+
 table.insert(characters, Character.new('ghost', 'pink'))
 table.insert(characters, Character.new('ghost', 'blue'))
 table.insert(characters, Character.new('ghost', 'orange'))
