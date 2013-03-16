@@ -55,6 +55,8 @@ lives_left = 3
 score = 0
 
 jstick = nil
+wata = nil
+play_wata_till = -1
 
 -------------------------------------------------------------------------------
 -- Define the Character class.
@@ -263,6 +265,8 @@ function Character:update(dt)
         dots[k] = nil
         num_dots = num_dots - 1
         score = score + 10
+        play_wata_till = clock + 0.2
+        wata:play()
         if num_dots == 0 then
           game_over = true
           message = "You Win! w00t"
@@ -535,11 +539,20 @@ function check_jstick_if_present()
   dir_request({x, y})
 end
 
+function update_audio()
+  if play_wata_till <= clock then
+    wata:pause()
+  end
+end
+
 -------------------------------------------------------------------------------
 -- Love functions.
 -------------------------------------------------------------------------------
 
 function love.load()
+
+  wata = love.audio.newSource("watawata.ogg", "static")
+  wata:setLooping(true)
 
   jstick = (love.joystick.getNumJoysticks() > 0)
   if jstick then
@@ -598,9 +611,11 @@ function love.keypressed(key)
 end
 
 function love.update(dt)
-  check_jstick_if_present()
   clock = clock + dt
+
+  check_jstick_if_present()
   update_ghost_mode()
+  update_audio()
   for k, character in pairs(characters) do
     character:update(dt)
   end
