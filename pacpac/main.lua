@@ -52,6 +52,7 @@ characters = {}  -- All moving Character objects = man + ghosts.
 ghost_mode = 'scatter'
 
 lives_left = 3
+score = 0
 
 -------------------------------------------------------------------------------
 -- Define the Character class.
@@ -255,9 +256,11 @@ function Character:update(dt)
       if dots[k] then
         if superdots[k] then
           super_mode_till = clock + 6.0
+          score = score + 40  -- We still get the regular +10 below.
         end
         dots[k] = nil
         num_dots = num_dots - 1
+        score = score + 10
         if num_dots == 0 then
           game_over = true
           message = "You Win! w00t"
@@ -520,6 +523,11 @@ function draw_message()
   love.graphics.print(message, 8 * tile_size, 23.5 * tile_size)
 end
 
+function draw_score()
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.print("Score: " .. score, 16 * tile_size, 23.5 * tile_size)
+end
+
 -------------------------------------------------------------------------------
 -- Love functions.
 -------------------------------------------------------------------------------
@@ -540,6 +548,7 @@ function love.draw()
 
   draw_lives_left()
   draw_message()
+  draw_score()
 end
 
 function love.keypressed(key)
