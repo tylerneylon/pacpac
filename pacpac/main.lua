@@ -54,6 +54,8 @@ ghost_mode = 'scatter'
 lives_left = 3
 score = 0
 
+jstick = nil
+
 -------------------------------------------------------------------------------
 -- Define the Character class.
 -------------------------------------------------------------------------------
@@ -404,32 +406,6 @@ function hash_from_list(list)
   return hash
 end
 
-function love.load()
-  superdots = hash_from_list({{2.5, 4}, {18.5, 4}, {2.5, 17.5}, {18.5, 17.5}})
-
-  -- This will be a hash set of all dot locations.
-  dots = {}
- 
-  -- Inner functions to help find the dot locations.
-  -- The input x, y is the integer square location in tile coordinates.
-  function add_dots(x, y)
-    if map[x][y] ~= 0 then return end
-    add_one_dot(x + 0.5, y + 0.5)
-    if x + 1 <= #map and map[x + 1][y] == 0 then
-      add_one_dot(x + 1, y + 0.5)
-    end
-    if y + 1 <= #(map[1]) and map[x][y + 1] == 0 then
-      add_one_dot(x + 0.5, y + 1)
-    end
-  end
-  function add_one_dot(x, y)
-    dots[str({x, y})] = {x, y}
-    num_dots = num_dots + 1
-  end
-
-  for x = 1, #map do for y = 1, #(map[1]) do add_dots(x, y) end end
-end
-
 -- The input x, y is the center of the dot in tile-based coordinates.
 function draw_one_dot(x, y)
   local dot_size = 1
@@ -528,9 +504,74 @@ function draw_score()
   love.graphics.print("Score: " .. score, 16 * tile_size, 23.5 * tile_size)
 end
 
+-- Input is similar to {0, 1}, which would be a request to go right.
+function dir_request(dir)
+  if dir == nil then return end
+  if man:can_go_in_dir(dir) then
+    man.dir = dir
+  else
+    man.next_dir = dir
+  end
+end
+
+function sign(x)
+  if x == 0 then return 0 end
+  if x < 0 then return -1 end
+  return 1
+end
+
+function check_jstick_if_present()
+  if not jstick then return end
+  x, y = love.joystick.getAxes(1)
+  -- Discard low-volume movements.
+  if math.max(math.abs(x), math.abs(y)) < 0.5 then return end
+  -- Discretize the direction.
+  if math.abs(x) < math.abs(y) then
+    x = 0
+  else
+    y = 0
+  end
+  x, y = sign(x), sign(y)
+  dir_request({x, y})
+end
+
 -------------------------------------------------------------------------------
 -- Love functions.
 -------------------------------------------------------------------------------
+
+function love.load()
+
+  jstick = (love.joystick.getNumJoysticks() > 0)
+  if jstick then
+    print('Detected joystick: ' .. love.joystick.getName(1))
+  else
+    print('No joystick detected.')
+  end
+
+  superdots = hash_from_list({{2.5, 4}, {18.5, 4}, {2.5, 17.5}, {18.5, 17.5}})
+
+  -- This will be a hash set of all dot locations.
+  dots = {}
+ 
+  -- Inner functions to help find the dot locations.
+  -- The input x, y is the integer square location in tile coordinates.
+  function add_dots(x, y)
+    if map[x][y] ~= 0 then return end
+    add_one_dot(x + 0.5, y + 0.5)
+    if x + 1 <= #map and map[x + 1][y] == 0 then
+      add_one_dot(x + 1, y + 0.5)
+    end
+    if y + 1 <= #(map[1]) and map[x][y + 1] == 0 then
+      add_one_dot(x + 0.5, y + 1)
+    end
+  end
+  function add_one_dot(x, y)
+    dots[str({x, y})] = {x, y}
+    num_dots = num_dots + 1
+  end
+
+  for x = 1, #map do for y = 1, #(map[1]) do add_dots(x, y) end end
+end
 
 function love.draw()
   for x = 1, #map do for y = 1, #(map[1]) do
@@ -553,20 +594,21 @@ end
 
 function love.keypressed(key)
   local dirs = {up = {0, -1}, down = {0, 1}, left = {-1, 0}, right = {1, 0}}
-  local dir = dirs[key]
-  if dir == nil then return end
-  if man:can_go_in_dir(dir) then
-    man.dir = dir
-  else
-    man.next_dir = dir
-  end
+  dir_request(dirs[key])
 end
 
 function love.update(dt)
+  check_jstick_if_present()
   clock = clock + dt
   update_ghost_mode()
   for k, character in pairs(characters) do
     character:update(dt)
   end
   check_for_hit()
+end
+
+function love.joystickpressed(joystick, button)
+  -- These button numbers work for the PS3 controller.
+  local dirs = {[5] = {0, -1}, [6] = {1, 0}, [7] = {0, 1}, [8] = {-1, 0}}
+  dir_request(dirs[button])
 end
