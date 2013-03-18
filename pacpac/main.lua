@@ -57,6 +57,7 @@ score = 0
 jstick = nil
 wata = nil
 play_wata_till = -1
+weeoo = nil
 
 -------------------------------------------------------------------------------
 -- Define the Character class.
@@ -553,6 +554,10 @@ function love.load()
 
   wata = love.audio.newSource("watawata.ogg", "static")
   wata:setLooping(true)
+
+  weeoo = love.audio.newSource("weeoo.ogg", "static")
+  weeoo:setLooping(true)
+  weeoo:play()
 
   jstick = (love.joystick.getNumJoysticks() > 0)
   if jstick then
