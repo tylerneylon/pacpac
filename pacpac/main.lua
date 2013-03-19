@@ -60,6 +60,47 @@ play_wata_till = -1
 weeoo = nil
 
 -------------------------------------------------------------------------------
+-- Define the PacSource class.
+-- This is a weird class because we have to wrap instead of subclass, as the
+-- object that acts like our base class is userdata instead of a table.
+-------------------------------------------------------------------------------
+
+PacSource = {} ; PacSource.__index = PacSource
+
+function PacSource.new(filename)
+  local pac_src = {}
+  pac_src.src = love.audio.newSource(filename, "static")
+  pac_src.filename = filename
+  return setmetatable(pac_src, PacSource)
+end
+
+-- This is a workaround for an infrequent but annoying audio bug where clips
+-- simply stop playing and need to be recreated as new objects.
+function PacSource:play()
+  self.src:play()
+  if self.src:isPaused() then
+    -- Here is the workaround. Theoretically, this block should never happen.
+    -- But it does.
+    local is_looping = self.src:isLooping()
+    self.src = love.audio.newSource(self.filename, "static")
+    self.src:setLooping(is_looping)
+    self.src:play()
+  end
+end
+
+function PacSource:pause()
+  self.src:pause()
+end
+
+function PacSource:setLooping(should_loop)
+  self.src:setLooping(should_loop)
+end
+
+function PacSource:isPaused()
+  return self.src:isPaused()
+end
+
+-------------------------------------------------------------------------------
 -- Define the Character class.
 -------------------------------------------------------------------------------
 
@@ -542,7 +583,9 @@ end
 
 function update_audio()
   if play_wata_till <= clock then
-    wata:pause()
+    if not wata:isPaused() then
+      wata:pause()
+    end
   end
 end
 
@@ -552,10 +595,10 @@ end
 
 function love.load()
 
-  wata = love.audio.newSource("watawata.ogg", "static")
+  wata = PacSource.new("watawata.ogg")
   wata:setLooping(true)
 
-  weeoo = love.audio.newSource("weeoo.ogg", "static")
+  weeoo = PacSource.new("weeoo.ogg")
   weeoo:setLooping(true)
   weeoo:play()
 
