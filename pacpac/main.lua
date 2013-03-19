@@ -57,9 +57,13 @@ next_music_speedup = -1
 score = 0
 
 jstick = nil
+
+-- Sound-related variables.
+
 wata = nil
 play_wata_till = -1
 weeoo = nil
+bwop = nil
 
 -------------------------------------------------------------------------------
 -- Define the PacSource class.
@@ -79,7 +83,9 @@ end
 -- This is a workaround for an infrequent but annoying audio bug where clips
 -- simply stop playing and need to be recreated as new objects.
 function PacSource:play()
-  self.src:play()
+  if self.src:isPaused() or self.src:isStopped() then
+    self.src:play()
+  end
   if self.src:isPaused() then
     -- Here is the workaround. Theoretically, this block should never happen.
     -- But it does.
@@ -90,7 +96,12 @@ function PacSource:play()
   end
 end
 
-function PacSource:pause() self.src:pause() end
+function PacSource:pause()
+  if not self.src:isPaused() and not self.src:isStopped() then
+    self.src:pause()
+  end
+end
+
 function PacSource:setLooping(should_loop) self.src:setLooping(should_loop) end
 function PacSource:isPaused() return self.src:isPaused() end
 function PacSource:setVolume(volume) self.src:setVolume(volume) end
@@ -296,10 +307,7 @@ function Character:update(dt)
     local dots_hit = dots_hit_by_man_at_xy(self.x, self.y)
     for k, v in pairs(dots_hit) do
       if dots[k] then
-        if superdots[k] then
-          super_mode_till = clock + 6.0
-          score = score + 40  -- We still get the regular +10 below.
-        end
+        if superdots[k] then superdot_eaten() end
         dots[k] = nil
         num_dots = num_dots - 1
         score = score + 10
@@ -411,6 +419,11 @@ table.insert(characters, Character.new('ghost', 'orange'))
 -------------------------------------------------------------------------------
 -- Non-love functions.
 -------------------------------------------------------------------------------
+
+function superdot_eaten()
+  super_mode_till = clock + 6.0
+  score = score + 40  -- An additional +10 is given for every dot.
+end
 
 -- Sets ghost_mode to either 'scatter' or 'pursue', based on a 26-second cycle,
 -- where the first 6 seconds are scatter, and the next 20 are pursue.
@@ -579,6 +592,18 @@ function check_jstick_if_present()
   dir_request({x, y})
 end
 
+-- Expects music to be one of 'none', 'weeoo', or 'bwop'.
+function set_music(music)
+  local music_bools = {none = {false, false},
+                       weeoo = {true, false},
+                       bwop = {false, true}}
+  local m = music_bools[music]
+  local clips = {weeoo, bwop}
+  for i = 1, 2 do
+    if m[i] then clips[i]:play() else clips[i]:pause() end
+  end
+end
+
 function update_audio()
   if play_wata_till <= clock then
     if not wata:isPaused() then
@@ -587,11 +612,16 @@ function update_audio()
   end
 
   if pause_till > clock then
-    if not weeoo:isPaused() then weeoo:pause() end
-  else
-    if weeoo:isPaused() then weeoo:play() end
+    set_music("none")
+    return
   end
 
+  if super_mode_till > clock then
+    set_music("bwop")
+    return
+  end
+
+  set_music("weeoo")
   -- Speed up the weeoo over time.
   local music_speedup_cycle = 15  -- In seconds.
   local first_speedup = life_start_time + music_speedup_cycle
@@ -622,12 +652,13 @@ function love.load()
 
   wata = PacSource.new("watawata.ogg")
   wata:setLooping(true)
-
   set_weeoo(1)
+  bwop = PacSource.new("bwop.ogg")
+  bwop:setLooping(true)
 
   jstick = (love.joystick.getNumJoysticks() > 0)
   if jstick then
-    print('Detected joystick: ' .. love.joystick.getName(1))
+    print('Detected ' .. love.joystick.getName(1))
   else
     print('No joystick detected.')
   end
