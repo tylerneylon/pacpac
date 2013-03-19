@@ -52,6 +52,8 @@ characters = {}  -- All moving Character objects = man + ghosts.
 ghost_mode = 'scatter'
 
 lives_left = 3
+life_start_time = 0
+next_music_speedup = -1
 score = 0
 
 jstick = nil
@@ -88,17 +90,11 @@ function PacSource:play()
   end
 end
 
-function PacSource:pause()
-  self.src:pause()
-end
-
-function PacSource:setLooping(should_loop)
-  self.src:setLooping(should_loop)
-end
-
-function PacSource:isPaused()
-  return self.src:isPaused()
-end
+function PacSource:pause() self.src:pause() end
+function PacSource:setLooping(should_loop) self.src:setLooping(should_loop) end
+function PacSource:isPaused() return self.src:isPaused() end
+function PacSource:setVolume(volume) self.src:setVolume(volume) end
+function PacSource:stop() self.src:stop() end
 
 -------------------------------------------------------------------------------
 -- Define the Character class.
@@ -524,6 +520,8 @@ function check_for_hit()
         message = "oops"
         show_message_till = clock + 3.0
         pause_till = clock + 3.0
+        life_start_time = pause_till
+        set_weeoo(1)
 
         if lives_left == 0 then
           message = "Game Over"
@@ -587,6 +585,33 @@ function update_audio()
       wata:pause()
     end
   end
+
+  if pause_till > clock then
+    if not weeoo:isPaused() then weeoo:pause() end
+  else
+    if weeoo:isPaused() then weeoo:play() end
+  end
+
+  -- Speed up the weeoo over time.
+  local music_speedup_cycle = 15  -- In seconds.
+  local first_speedup = life_start_time + music_speedup_cycle
+  next_music_speedup = math.max(next_music_speedup, first_speedup)
+  if clock > next_music_speedup then
+    local i = math.floor((clock - life_start_time) / music_speedup_cycle) + 1
+    set_weeoo(i)
+    next_music_speedup = next_music_speedup + music_speedup_cycle
+  end
+end
+
+-- Input speed is an integer >= 1. If speed > 6, we still play speed 6.
+function set_weeoo(speed)
+  if weeoo then weeoo:stop() end
+  speed = math.min(speed, 6)
+  local filename = "weeoo" .. speed .. ".ogg"
+  weeoo = PacSource.new(filename)
+  weeoo:setLooping(true)
+  weeoo:setVolume(0.4)
+  weeoo:play()
 end
 
 -------------------------------------------------------------------------------
@@ -598,9 +623,7 @@ function love.load()
   wata = PacSource.new("watawata.ogg")
   wata:setLooping(true)
 
-  weeoo = PacSource.new("weeoo.ogg")
-  weeoo:setLooping(true)
-  weeoo:play()
+  set_weeoo(1)
 
   jstick = (love.joystick.getNumJoysticks() > 0)
   if jstick then
