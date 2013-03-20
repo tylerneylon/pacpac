@@ -128,6 +128,9 @@ table.insert(characters, Character.new('ghost', 'orange'))
 -------------------------------------------------------------------------------
 
 function superdot_eaten()
+  for k, c in pairs(characters) do
+    if c.shape == 'ghost' then c.eaten = false end
+  end
   super_mode_till = clock + 6.0
   score = score + 40  -- An additional +10 is given for every dot.
 end

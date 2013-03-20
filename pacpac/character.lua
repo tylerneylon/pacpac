@@ -13,12 +13,17 @@ function Character.new(shape, color)
   local c = setmetatable({shape = shape, color = color}, Character)
   c.dead_till = -1
   c.mode = 'normal'  -- Can be 'freemove', for ghosts through the hotel door.
+  c.eaten = false  -- To avoid ghosts being double-eaten during super mode.
   c:reset()
   return c
 end
 
 function Character:is_dead()
   return self.dead_till > clock
+end
+
+function Character:is_weak()
+  return super_mode_till > clock and not self.eaten
 end
 
 function Character:reset()
@@ -60,7 +65,7 @@ function Character:speed()
     if self:dist_to_pt({10.5, 9.5}) < 1 then return 4 end
     return 8
   end
-  if super_mode_till > clock then
+  if self:is_weak() then
     return 3
   else
     return 4
@@ -71,7 +76,7 @@ function Character:target()
   if self.shape == 'hero' then return {} end
   if self:is_dead() then return {10.5, 11.5} end
   if self.mode == 'freemove' then return {10.5, 9.5} end
-  if super_mode_till > clock then
+  if self:is_weak() then
     return {math.random() * 19, math.random() * 22}
   end
   if self.color == 'red' then
@@ -224,6 +229,7 @@ function Character:update(dt)
       self.dir = {0, -1}
       self.dead_till = clock
       self.mode = 'freemove'
+      self.eaten = true
     else
       self.mode = 'normal'
     end
@@ -277,11 +283,12 @@ function Character:draw()
                         start + mouth_angle / 2,
                         start + 2 * math.pi - mouth_angle / 2, 10)
     end
-  else
-    if super_mode_till > clock then
+  else  -- It's a ghost.
+    if self:is_weak() then
       love.graphics.setColor(0, 0, 255)
     end
     if not self:is_dead() then
+      -- Draw the ghost body.
       love.graphics.circle('fill', self.x * tile_size,
                            self.y * tile_size, tile_size / 2, 10)
       local vertices = {(self.x + 0.5) * tile_size, self.y * tile_size,
@@ -303,16 +310,16 @@ function Character:draw()
       love.graphics.circle('fill', self.x * tile_size + dx,
                            (self.y - 0.1) * tile_size, 3.0, 10)
     end
-    if super_mode_till <= clock or self:is_dead() then
-      -- Draw the iris/pupil part.
+    if self:is_dead() or not self:is_weak() then
+      -- Draw the pupils.
       love.graphics.setColor(0, 0, 192)
       for i = -1, 1, 2 do
         local dx = i * 4
         love.graphics.circle('fill', self.x * tile_size + dx + self.dir[1],
                              (self.y - 0.1) * tile_size + self.dir[2], 2.0, 10)
       end
-    else
-      -- We're in super mode.
+    elseif self:is_weak() then
+      -- We're in super mode; draw a wavy mouth.
       local base = {self.x * tile_size - 4.5, self.y * tile_size + 5}
       local last_pt = nil
       for i = 0, 6 do
