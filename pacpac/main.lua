@@ -33,7 +33,7 @@ map = {{1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 superdots = nil -- Value given below.
 num_dots = 0
 
-tile_size = 20
+tile_size = 22
 
 man_x = 10.5
 man_y = 17.5
@@ -260,11 +260,13 @@ function dots_hit_by_man_at_xy(x, y)
   return dots
 end
 
-function xy_hits_a_wall(x, y)
+function xy_hits_a_wall(x, y, can_pass_hotel_door)
   local pts = pts_hit_by_man_at_xy(x, y)
   for k, v in pairs(pts) do
     if v[1] >= 1 and v[1] <= #map then
-      if map[v[1]][v[2]] == 1 then return true end
+      local m = map[v[1]][v[2]] 
+      if m == 1 then return true end
+      if m == 3 and not can_pass_hotel_door then return true end
     end
   end
   return false
@@ -301,7 +303,7 @@ function check_for_hit()
         end
 
         -- Move the ghosts and the hero back home.
-        for k, character in pairs(characters) do character:go_home() end
+        for k, character in pairs(characters) do character:reset() end
       end
     end
   end

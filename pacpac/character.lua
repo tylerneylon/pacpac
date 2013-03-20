@@ -12,7 +12,8 @@ local Character = {} ; Character.__index = Character
 function Character.new(shape, color)
   local c = setmetatable({shape = shape, color = color}, Character)
   c.dead_till = -1
-  c:go_home()
+  c.mode = 'normal'  -- Can be 'freemove', for ghosts through the hotel door.
+  c:reset()
   return c
 end
 
@@ -20,29 +21,34 @@ function Character:is_dead()
   return self.dead_till > clock
 end
 
-function Character:go_home()
+function Character:reset()
   if self.shape == 'hero' then
     self.x = 10.5
     self.y = 17.5
     self.dir = {-1, 0}
     self.next_dir = nil
   else
+    -- It's a ghost.
     if self.color == 'red' then
       self.x = 10.5
       self.y = 9.5
       self.dir = {1, 0}
+      self.exit_time = math.huge
     elseif self.color == 'pink' then
-      self.x = 9.5
-      self.y = 11.5
-      self.dir = {0, 0}
-    elseif self.color == 'blue' then
       self.x = 10.5
       self.y = 11.5
       self.dir = {0, 0}
+      self.exit_time = clock + 6
+    elseif self.color == 'blue' then
+      self.x =  9.5
+      self.y = 11.5
+      self.dir = {0, 0}
+      self.exit_time = clock + 12
     elseif self.color == 'orange' then
       self.x = 11.5
       self.y = 11.5
       self.dir = {0, 0}
+      self.exit_time = clock + 18
     end
   end
 end
@@ -60,6 +66,7 @@ end
 function Character:target()
   if self.shape == 'hero' then return {} end
   if self:is_dead() then return {10.5, 9.5} end
+  if self.mode == 'freemove' then return {10.5, 9.5} end
   if super_mode_till > clock then
     return {math.random() * 19, math.random() * 22}
   end
@@ -107,7 +114,8 @@ end
 function Character:can_go_in_dir(dir)
   if dir == nil then return false end
   local new_x, new_y = self.x + dir[1], self.y + dir[2]
-  return not xy_hits_a_wall(new_x, new_y)
+  local can_pass_hotel_door = (self.mode == 'freemove')
+  return not xy_hits_a_wall(new_x, new_y, can_pass_hotel_door)
 end
 
 function Character:dot_prod(dir)
@@ -162,13 +170,20 @@ end
 function Character:update(dt)
   if pause_till > clock then return end
 
+  -- Check if it's time for a ghost to exit the ghost hotel.
+  if self.shape == 'ghost' and self.exit_time < clock then
+    self.mode = 'freemove'
+    self.exit_time = math.huge
+    self.dir = {0, -1}
+  end
+
   -- Blind movement.
   self.x = self.x + self.dir[1] * dt * self:speed()
   self.y = self.y + self.dir[2] * dt * self:speed()
   self:snap_into_place()
 
   -- Step back if we hit a wall.
-  local did_hit_wall = xy_hits_a_wall(self.x, self.y)
+  local did_hit_wall = xy_hits_a_wall(self.x, self.y, self.mode == 'freemove')
   if did_hit_wall then
     local old_dir = self.dir
     self.dir = {0, 0}
@@ -198,6 +213,13 @@ function Character:update(dt)
     self.dir = {1, 0}
   end
 
+  -- Check if we are a ghost finishing a hotel exit.
+  local t = self:target()
+  if self.mode == 'freemove' and self:dist_to_pt(t[1], t[2]) < 0.3 then
+    self.mode = 'normal'
+  end
+
+  -- Register dots eaten.
   if self.shape == 'hero' then
     local dots_hit = dots_hit_by_man_at_xy(self.x, self.y)
     for k, v in pairs(dots_hit) do
@@ -295,10 +317,14 @@ function Character:draw()
   end
 end
 
+function Character:dist_to_pt(x, y)
+  local dist_v = {self.x - x, self.y - y}
+  return math.sqrt(dist_v[1] * dist_v[1] + dist_v[2] * dist_v[2])
+end
+
 function Character:dist(other)
   if other:is_dead() then return math.huge end
-  local dist_v = {other.x - self.x, other.y - self.y}
-  return math.sqrt(dist_v[1] * dist_v[1] + dist_v[2] * dist_v[2])
+  return self:dist_to_pt(other.x, other.y)
 end
 
 return Character
