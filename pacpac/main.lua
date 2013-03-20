@@ -184,10 +184,47 @@ function draw_dots()
 end
 
 function draw_wall(x, y)
-  -- print('draw_wall(' .. x .. ', ' .. y .. ')')
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.rectangle('fill', x * tile_size, y * tile_size,
-                          tile_size, tile_size)
+
+  -- A shortcut for map[pt[1]][pt[2]].
+  function m(pt)
+    if math.min(pt[1], pt[2]) < 1 then return 0 end
+    if pt[1] > #map or pt[2] > #(map[1]) then return 0 end
+    return map[pt[1]][pt[2]]
+  end
+
+  -- Avoid accidental line transparency.
+  function line(x1, y1, x2, y2)
+    love.graphics.line(math.floor(x1 + 0.5) + 0.5, math.floor(y1 + 0.5) + 0.5,
+                       math.floor(x2 + 0.5) + 0.5, math.floor(y2 + 0.5) + 0.5)
+  end
+
+  local map_pt = {x, y}
+  for coord = 1, 2 do for delta = -1, 1, 2 do
+    local other_pt = {map_pt[1], map_pt[2]}
+    other_pt[coord] = other_pt[coord] + delta
+    local other = m(other_pt)
+    if other == 0 or other == 2 then
+      -- We choose w + ww = 1.0 for a weighted average.
+      local w = 0.75
+      local ww = 1.0 - w
+      local c = {(w * map_pt[1] + ww * other_pt[1] + 0.5) * tile_size,
+                 (w * map_pt[2] + ww * other_pt[2] + 0.5) * tile_size}
+
+      -- Find the differences from c to draw; longer if wall continues.
+      local d = {{0, 0}, {0, 0}}
+      for dd = -1, 1, 2 do
+        local i = (dd + 3) / 2  -- This is 1, 2 as dd is -1, 1.
+        local side = {map_pt[1], map_pt[2]}
+        local normal = 3 - coord
+        side[normal] = side[normal] + dd
+        d[i][normal] = dd * ww * tile_size
+        if m(side) == 1 then d[i][normal] = dd * w * tile_size end
+      end
+
+      line(c[1] + d[1][1], c[2] + d[1][2],
+           c[1] + d[2][1], c[2] + d[2][2])
+    end
+  end end  -- Loop over coord, delta.
 end
 
 function pts_hit_by_man_at_xy(x, y)
@@ -396,6 +433,9 @@ function love.load()
 end
 
 function love.draw()
+
+  -- Draw walls.
+  love.graphics.setColor(0, 0, 255)
   for x = 1, #map do for y = 1, #(map[1]) do
     if map[x][y] == 1 then
       draw_wall(x, y)

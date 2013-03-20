@@ -32,17 +32,17 @@ function Character:go_home()
       self.y = 9.5
       self.dir = {1, 0}
     elseif self.color == 'pink' then
-      self.x = 18.5
-      self.y = 2.5
-      self.dir = {-1, 0}
+      self.x = 9.5
+      self.y = 11.5
+      self.dir = {0, 0}
     elseif self.color == 'blue' then
-      self.x = 2.5
-      self.y = 2.5
-      self.dir = {0, 1}
-    elseif self.color == 'orange' then
       self.x = 10.5
-      self.y = 5.5
-      self.dir = {-1, 0}
+      self.y = 11.5
+      self.dir = {0, 0}
+    elseif self.color == 'orange' then
+      self.x = 11.5
+      self.y = 11.5
+      self.dir = {0, 0}
     end
   end
 end
