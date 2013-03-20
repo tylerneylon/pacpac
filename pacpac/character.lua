@@ -55,7 +55,11 @@ end
 
 function Character:speed()
   if self.shape == 'hero' then return 4 end
-  if self:is_dead() then return 8 end
+  if self:is_dead() then
+    -- The dead move fast, except near the hotel so they don't miss the door.
+    if self:dist_to_pt({10.5, 9.5}) < 1 then return 4 end
+    return 8
+  end
   if super_mode_till > clock then
     return 3
   else
@@ -65,7 +69,7 @@ end
 
 function Character:target()
   if self.shape == 'hero' then return {} end
-  if self:is_dead() then return {10.5, 9.5} end
+  if self:is_dead() then return {10.5, 11.5} end
   if self.mode == 'freemove' then return {10.5, 9.5} end
   if super_mode_till > clock then
     return {math.random() * 19, math.random() * 22}
@@ -114,7 +118,7 @@ end
 function Character:can_go_in_dir(dir)
   if dir == nil then return false end
   local new_x, new_y = self.x + dir[1], self.y + dir[2]
-  local can_pass_hotel_door = (self.mode == 'freemove')
+  local can_pass_hotel_door = (self.mode == 'freemove' or self:is_dead())
   return not xy_hits_a_wall(new_x, new_y, can_pass_hotel_door)
 end
 
@@ -125,7 +129,7 @@ function Character:dot_prod(dir)
 end
 
 function Character:just_turned()
-  return self.last_turn and clock - self.last_turn < 0.2
+  return self.last_turn and self:dist_to_pt(self.last_turn) < 0.8
 end
 
 -- Input is the direction we were previously going in.
@@ -142,7 +146,7 @@ function Character:did_stop(old_dir)
   for k, t in pairs(turns) do
     if self:can_go_in_dir(t) then
       self.dir = t
-      self.last_turn = clock
+      self.last_turn = {self.x, self.y}
       return
     end
   end
@@ -163,7 +167,7 @@ end
 function Character:turn_if_better(turn)
   if self:dot_prod(turn) > self:dot_prod(self.dir) then
     self.dir = turn
-    self.last_turn = clock
+    self.last_turn = {self.x, self.y}
   end
 end
 
@@ -183,7 +187,8 @@ function Character:update(dt)
   self:snap_into_place()
 
   -- Step back if we hit a wall.
-  local did_hit_wall = xy_hits_a_wall(self.x, self.y, self.mode == 'freemove')
+  local can_pass_hotel_door = (self.mode == 'freemove' or self:is_dead())
+  local did_hit_wall = xy_hits_a_wall(self.x, self.y, can_pass_hotel_door)
   if did_hit_wall then
     local old_dir = self.dir
     self.dir = {0, 0}
@@ -214,9 +219,14 @@ function Character:update(dt)
   end
 
   -- Check if we are a ghost finishing a hotel exit.
-  local t = self:target()
-  if self.mode == 'freemove' and self:dist_to_pt(t[1], t[2]) < 0.3 then
-    self.mode = 'normal'
+  if can_pass_hotel_door and self:dist_to_pt(self:target()) < 0.3 then
+    if self:is_dead() then
+      self.dir = {0, -1}
+      self.dead_till = clock
+      self.mode = 'freemove'
+    else
+      self.mode = 'normal'
+    end
   end
 
   -- Register dots eaten.
@@ -317,14 +327,14 @@ function Character:draw()
   end
 end
 
-function Character:dist_to_pt(x, y)
-  local dist_v = {self.x - x, self.y - y}
+function Character:dist_to_pt(pt)
+  local dist_v = {self.x - pt[1], self.y - pt[2]}
   return math.sqrt(dist_v[1] * dist_v[1] + dist_v[2] * dist_v[2])
 end
 
 function Character:dist(other)
   if other:is_dead() then return math.huge end
-  return self:dist_to_pt(other.x, other.y)
+  return self:dist_to_pt({other.x, other.y})
 end
 
 return Character

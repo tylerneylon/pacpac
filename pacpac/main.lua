@@ -286,7 +286,7 @@ function check_for_hit()
   for k, character in pairs(characters) do
     if character ~= man and man:dist(character) < 0.5 then
       if super_mode_till > clock then
-        character.dead_till = clock + 6.0
+        character.dead_till = math.huge
       else
         lives_left = lives_left - 1
         message = "oops"
