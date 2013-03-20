@@ -19,7 +19,7 @@ map = {{1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
        {1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1},
        {1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
        {1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1},
-       {1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 2, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
+       {1, 1, 1, 1, 0, 1, 1, 1, 0, 3, 2, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
        {1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1},
        {1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
        {1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1},
@@ -198,15 +198,28 @@ function draw_wall(x, y)
                        math.floor(x2 + 0.5) + 0.5, math.floor(y2 + 0.5) + 0.5)
   end
 
+  local w = 0.75  -- A parameter for how to draw the walls.
+  local ww = 1.0 - w
   local map_pt = {x, y}
+
+  if m(map_pt) == 3 then
+    love.graphics.setColor(255, 200, 200)
+    local h = w * 0.2
+    love.graphics.rectangle('fill',
+                            (x - ww)* tile_size + 1,
+                            (y + (1 - h) / 2) * tile_size,
+                            (1 + 2 * ww) * tile_size - 1,
+                            tile_size * h)
+    return
+  end
+
+  love.graphics.setColor(0, 0, 255)
   for coord = 1, 2 do for delta = -1, 1, 2 do
     local other_pt = {map_pt[1], map_pt[2]}
     other_pt[coord] = other_pt[coord] + delta
     local other = m(other_pt)
-    if other == 0 or other == 2 then
+    if other ~= 1 then
       -- We choose w + ww = 1.0 for a weighted average.
-      local w = 0.75
-      local ww = 1.0 - w
       local c = {(w * map_pt[1] + ww * other_pt[1] + 0.5) * tile_size,
                  (w * map_pt[2] + ww * other_pt[2] + 0.5) * tile_size}
 
@@ -435,9 +448,8 @@ end
 function love.draw()
 
   -- Draw walls.
-  love.graphics.setColor(0, 0, 255)
   for x = 1, #map do for y = 1, #(map[1]) do
-    if map[x][y] == 1 then
+    if map[x][y] == 1 or map[x][y] == 3 then
       draw_wall(x, y)
     end
   end end  -- Loop over x, y.
