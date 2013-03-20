@@ -266,20 +266,21 @@ function Character:draw()
   local color = colors[self.color]
   love.graphics.setColor(color[1], color[2], color[3])
   if self.shape == 'hero' then
-    local p = 0.15
-    local max = 1.0
+    local p = 0.15  -- Period, in seconds, of chomps.
+    local max = 1.0  -- Max mouth angle, in radians.
+    local r = 0.45  -- Fraction of tile_size to use as a radius.
     if self.always_draw then
       local mouth_angle = max
       local start = math.atan2(0, -1)
       love.graphics.arc('fill', self.x * tile_size, self.y * tile_size,
-                        tile_size / 2,
+                        tile_size * r,
                         start + mouth_angle / 2,
                         start + 2 * math.pi - mouth_angle / 2, 10)
     else
       local mouth_angle = max * (math.sin((clock % p) / p * 2 * math.pi) + 1.0)
       local start = math.atan2(self.dir[2], self.dir[1])
       love.graphics.arc('fill', self.x * tile_size, self.y * tile_size,
-                        tile_size / 2,
+                        tile_size * r,
                         start + mouth_angle / 2,
                         start + 2 * math.pi - mouth_angle / 2, 10)
     end
@@ -289,16 +290,17 @@ function Character:draw()
     end
     if not self:is_dead() then
       -- Draw the ghost body.
+      local r = 0.45
       love.graphics.circle('fill', self.x * tile_size,
-                           self.y * tile_size, tile_size / 2, 10)
-      local vertices = {(self.x + 0.5) * tile_size, self.y * tile_size,
-                        (self.x - 0.5) * tile_size, self.y * tile_size}
+                           self.y * tile_size, tile_size * r, 10)
+      local vertices = {(self.x + r) * tile_size, self.y * tile_size,
+                        (self.x - r) * tile_size, self.y * tile_size}
       local n = 5
-      local left = (self.x - 0.5) * tile_size
+      local left = (self.x - r) * tile_size
       local bottom = (self.y + 0.4) * tile_size
       for i = 0, n - 1 do
         local dy = 2 * (1 - (i % 2) * 2)
-        table.insert(vertices, left + (i / (n - 1)) * tile_size)
+        table.insert(vertices, left + (i / (n - 1)) * tile_size * (2 * r))
         table.insert(vertices, bottom + dy)
       end
       love.graphics.polygon('fill', vertices)
@@ -307,8 +309,10 @@ function Character:draw()
     love.graphics.setColor(255, 255, 255)
     for i = -1, 1, 2 do
       local dx = i * 4
+      local radius = 3
+      if self:is_weak() then radius = 2 end
       love.graphics.circle('fill', self.x * tile_size + dx,
-                           (self.y - 0.1) * tile_size, 3.0, 10)
+                           (self.y - 0.1) * tile_size, radius, 10)
     end
     if self:is_dead() or not self:is_weak() then
       -- Draw the pupils.

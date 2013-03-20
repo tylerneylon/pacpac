@@ -209,7 +209,7 @@ function draw_wall(x, y)
     love.graphics.setColor(255, 200, 200)
     local h = w * 0.2
     love.graphics.rectangle('fill',
-                            (x - ww)* tile_size + 1,
+                            (x - ww) * tile_size + 2,
                             (y + (1 - h) / 2) * tile_size,
                             (1 + 2 * ww) * tile_size - 1,
                             tile_size * h)
