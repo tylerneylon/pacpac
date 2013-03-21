@@ -523,11 +523,13 @@ function update_playing(dt)
 end
 
 function keypressed_playing(key)
+  if man == nil then return end
   local dirs = {up = {0, -1}, down = {0, 1}, left = {-1, 0}, right = {1, 0}}
   dir_request(dirs[key])
 end
 
 function joystickpressed_playing(joystick, button)
+  if man == nil then return end
   -- These button numbers work for the PS3 controller.
   local dirs = {[5] = {0, -1}, [6] = {1, 0}, [7] = {0, 1}, [8] = {-1, 0}}
   dir_request(dirs[button])
