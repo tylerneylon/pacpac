@@ -72,6 +72,8 @@ play_wata_till = -1
 weeoo = nil
 bwop = nil
 death_noise = nil
+nomnomz = {}
+nomnomz_index = 1
 
 -------------------------------------------------------------------------------
 -- Define the PacSource class.
@@ -297,10 +299,19 @@ function show_victory()
   game_over = true
 end
 
+-- There's a function for this since we might want to play up to 4 overlapping
+-- instances at once.
+function play_nomnom()
+  local n = nomnomz[nomnomz_index]
+  n:play()
+  nomnomz_index  = (nomnomz_index % 4) + 1
+end
+
 function check_for_hit()
   for k, character in pairs(characters) do
     if character ~= man and man:dist(character) < 0.5 then
       if character:is_weak() then
+        play_nomnom()
         character.dead_till = math.huge
         character.eaten = true
       else
@@ -560,12 +571,17 @@ end
 -------------------------------------------------------------------------------
 
 function love.load()
-  wata = PacSource.new("audio/watawata.ogg")
+  wata = PacSource.new('audio/watawata.ogg')
   wata:setLooping(true)
-  bwop = PacSource.new("audio/bwop.ogg")
+  bwop = PacSource.new('audio/bwop.ogg')
   bwop:setLooping(true)
-  death_noise = PacSource.new("audio/death.ogg")
+  death_noise = PacSource.new('audio/death.ogg')
   death_noise:setVolume(0.3)
+  for i = 1, 4 do
+    local n = PacSource.new('audio/nomnom.ogg')
+    n:setVolume(0.5)
+    table.insert(nomnomz, n)
+  end
 
   jstick = (love.joystick.getNumJoysticks() > 0)
   if jstick then
