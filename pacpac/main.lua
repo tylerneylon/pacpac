@@ -46,7 +46,7 @@ man_dir = {-1, 0}
 pending_dir = nil
 clock = 0
 
-message = ""
+message = ''
 show_message_till = -1
 pause_till = -1
 game_over = false
@@ -74,6 +74,7 @@ bwop = nil
 death_noise = nil
 nomnomz = {}
 nomnomz_index = 1
+runny = nil
 
 -------------------------------------------------------------------------------
 -- Define the PacSource class.
@@ -85,7 +86,7 @@ PacSource = {} ; PacSource.__index = PacSource
 
 function PacSource.new(filename)
   local pac_src = {}
-  pac_src.src = love.audio.newSource(filename, "static")
+  pac_src.src = love.audio.newSource(filename, 'static')
   pac_src.filename = filename
   return setmetatable(pac_src, PacSource)
 end
@@ -100,7 +101,7 @@ function PacSource:play()
     -- Here is the workaround. Theoretically, this block should never happen.
     -- But it does.
     local is_looping = self.src:isLooping()
-    self.src = love.audio.newSource(self.filename, "static")
+    self.src = love.audio.newSource(self.filename, 'static')
     self.src:setLooping(is_looping)
     self.src:play()
   end
@@ -291,7 +292,7 @@ function play_level_won_music()
 end
 
 function show_victory()
-  message = "You Win! w00t"
+  message = 'You Win! w00t'
   show_message_till = math.huge
   set_music('none')
   play_level_won_music()
@@ -317,14 +318,14 @@ function check_for_hit()
       else
         death_noise:play()
         lives_left = lives_left - 1
-        message = "oops"
+        message = 'oops'
         show_message_till = clock + 3.0
         pause_till = clock + 3.0
         life_start_time = pause_till
         set_weeoo(1)
 
         if lives_left == 0 then
-          message = "Game Over"
+          message = 'Game Over'
           show_message_till = math.huge
           pause_till = math.huge
           game_over = true
@@ -346,7 +347,7 @@ end
 
 function draw_score()
   love.graphics.setColor(255, 255, 255)
-  love.graphics.print("Score: " .. score, 16 * tile_size, 23.5 * tile_size)
+  love.graphics.print('Score: ' .. score, 16 * tile_size, 23.5 * tile_size)
 end
 
 -- Input is similar to {0, 1}, which would be a request to go right.
@@ -380,16 +381,12 @@ function check_jstick_if_present()
   dir_request({x, y})
 end
 
--- Expects music to be one of 'none', 'weeoo', or 'bwop'.
+-- Expects music to be one of 'none', 'weeoo', 'bwop', or 'runny'.
 function set_music(music)
-  local music_bools = {none = {false, false},
-                       weeoo = {true, false},
-                       bwop = {false, true}}
-  local m = music_bools[music]
-  local clips = {weeoo, bwop}
-  for i = 1, 2 do
-    if clips[i] then
-      if m[i] then clips[i]:play() else clips[i]:pause() end
+  local clips = {weeoo = weeoo, bwop = bwop, runny = runny}
+  for clip_name, clip in pairs(clips) do
+    if clip then
+      if music == clip_name then clip:play() else clip:pause() end
     end
   end
 end
@@ -401,17 +398,23 @@ function update_audio()
     end
   end
 
-  if game_over then
+  if game_over or pause_till > clock then
     set_music('none')
     return
   end
 
   if super_mode_till > clock then
-    set_music("bwop")
+    for k, character in pairs(characters) do
+      if character:is_dead() then
+        set_music('runny')
+        return
+      end
+    end
+    set_music('bwop')
     return
   end
 
-  set_music("weeoo")
+  set_music('weeoo')
   -- Speed up the weeoo over time.
   local music_speedup_cycle = 15  -- In seconds.
   local first_speedup = life_start_time + music_speedup_cycle
@@ -427,7 +430,7 @@ end
 function set_weeoo(speed)
   if weeoo then weeoo:stop() end
   speed = math.min(speed, 6)
-  local filename = "audio/weeoo" .. speed .. ".ogg"
+  local filename = 'audio/weeoo' .. speed .. '.ogg'
   weeoo = PacSource.new(filename)
   weeoo:setLooping(true)
   weeoo:setVolume(0.6)
@@ -579,9 +582,12 @@ function love.load()
   death_noise:setVolume(0.3)
   for i = 1, 4 do
     local n = PacSource.new('audio/nomnom.ogg')
-    n:setVolume(0.5)
+    n:setVolume(0.4)
     table.insert(nomnomz, n)
   end
+  runny = PacSource.new('audio/runny.ogg')
+  runny:setLooping(true)
+  runny:setVolume(0.08)
 
   jstick = (love.joystick.getNumJoysticks() > 0)
   if jstick then
