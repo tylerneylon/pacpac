@@ -282,7 +282,7 @@ end
 function check_for_hit()
   for k, character in pairs(characters) do
     if character ~= man and man:dist(character) < 0.5 then
-      if super_mode_till > clock then
+      if character:is_weak() then
         character.dead_till = math.huge
         character.eaten = true
       else
