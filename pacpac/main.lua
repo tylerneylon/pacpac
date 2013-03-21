@@ -66,6 +66,7 @@ wata = nil
 play_wata_till = -1
 weeoo = nil
 bwop = nil
+death_noise = nil
 
 -------------------------------------------------------------------------------
 -- Define the PacSource class.
@@ -291,6 +292,7 @@ function check_for_hit()
       if super_mode_till > clock then
         character.dead_till = math.huge
       else
+        death_noise:play()
         lives_left = lives_left - 1
         message = "oops"
         show_message_till = clock + 3.0
@@ -402,7 +404,7 @@ function set_weeoo(speed)
   local filename = "audio/weeoo" .. speed .. ".ogg"
   weeoo = PacSource.new(filename)
   weeoo:setLooping(true)
-  weeoo:setVolume(0.4)
+  weeoo:setVolume(0.6)
   weeoo:play()
 end
 
@@ -417,6 +419,8 @@ function love.load()
   set_weeoo(1)
   bwop = PacSource.new("audio/bwop.ogg")
   bwop:setLooping(true)
+  death_noise = PacSource.new("audio/death.ogg")
+  death_noise:setVolume(0.4)
 
   jstick = (love.joystick.getNumJoysticks() > 0)
   if jstick then
