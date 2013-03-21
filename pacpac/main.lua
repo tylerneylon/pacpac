@@ -283,6 +283,20 @@ function play_game_over_music()
   notes.play_song({'g2', 'g2', 'e2-', 'e2-', 'c2', 'c2', 'c2'}, 0.1)
 end
 
+function play_level_won_music()
+  local song = {'c1', 'g1', 'c2', 'g2', 'c3', 0, 'g2', 0, {'c3', 'c4'}}
+  notes.play_song(song, 0.15)
+end
+
+function show_victory()
+  message = "You Win! w00t"
+  show_message_till = math.huge
+  set_music('none')
+  play_level_won_music()
+  characters = {}
+  game_over = true
+end
+
 function check_for_hit()
   for k, character in pairs(characters) do
     if character ~= man and man:dist(character) < 0.5 then
@@ -376,8 +390,8 @@ function update_audio()
     end
   end
 
-  if pause_till > clock then
-    set_music("none")
+  if game_over then
+    set_music('none')
     return
   end
 

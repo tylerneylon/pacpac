@@ -248,9 +248,7 @@ function Character:update(dt)
         wata:play()
         if num_dots == 0 then
           game_over = true
-          message = "You Win! w00t"
-          show_message_till = math.huge
-          paused_till = math.huge
+          show_victory()
         end
       end
     end
@@ -258,7 +256,7 @@ function Character:update(dt)
 end
 
 function Character:draw()
-  if game_over then return end
+  -- if game_over then return end
   if not self.always_draw and pause_till > clock then return end
   local colors = {red = {255, 0, 0}, pink = {255, 128, 128},
                   blue = {0, 224, 255}, orange = {255, 128, 0},
