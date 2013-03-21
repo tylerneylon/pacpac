@@ -11,9 +11,6 @@ local Character = {} ; Character.__index = Character
 -- shape is 'hero' or 'ghost'; color is in {'red', 'pink', 'blue', 'orange'}.
 function Character.new(shape, color)
   local c = setmetatable({shape = shape, color = color}, Character)
-  c.dead_till = -1
-  c.mode = 'normal'  -- Can be 'freemove', for ghosts through the hotel door.
-  c.eaten = false  -- To avoid ghosts being double-eaten during super mode.
   c:reset()
   return c
 end
@@ -27,6 +24,9 @@ function Character:is_weak()
 end
 
 function Character:reset()
+  self.dead_till = -1
+  self.mode = 'normal'  -- Can be 'freemove' for ghosts through the hotel door.
+  self.eaten = false  -- To avoid ghosts being double eaten.
   if self.shape == 'hero' then
     self.x = 10.5
     self.y = 17.5
@@ -224,7 +224,7 @@ function Character:update(dt)
   end
 
   -- Check if we are a ghost finishing a hotel exit.
-  if can_pass_hotel_door and self:dist_to_pt(self:target()) < 0.3 then
+  if can_pass_hotel_door and self:dist_to_pt(self:target()) < 0.1 then
     if self:is_dead() then
       self.dir = {0, -1}
       self.dead_till = clock

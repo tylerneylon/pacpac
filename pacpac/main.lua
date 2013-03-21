@@ -296,6 +296,7 @@ function check_for_hit()
     if character ~= man and man:dist(character) < 0.5 then
       if super_mode_till > clock then
         character.dead_till = math.huge
+        character.eaten = true
       else
         death_noise:play()
         lives_left = lives_left - 1
@@ -414,6 +415,8 @@ function set_weeoo(speed)
 end
 
 function start_new_game()
+  set_weeoo(1)
+
   superdots = hash_from_list({{2.5, 4}, {18.5, 4}, {2.5, 17.5}, {18.5, 17.5}})
 
   -- This will be a hash set of all dot locations.
@@ -526,7 +529,6 @@ end
 function love.load()
   wata = PacSource.new("audio/watawata.ogg")
   wata:setLooping(true)
-  set_weeoo(1)
   bwop = PacSource.new("audio/bwop.ogg")
   bwop:setLooping(true)
   death_noise = PacSource.new("audio/death.ogg")
