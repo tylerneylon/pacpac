@@ -114,19 +114,6 @@ function PacSource:isPaused() return self.src:isPaused() end
 function PacSource:setVolume(volume) self.src:setVolume(volume) end
 function PacSource:stop() self.src:stop() end
 
--------------------------------------------------------------------------------
--- Set up the hero and ghosts.
--------------------------------------------------------------------------------
-
-man = Character.new('hero', 'yellow')
-table.insert(characters, man)
-
-red = Character.new('ghost', 'red')
-table.insert(characters, red)
-
-table.insert(characters, Character.new('ghost', 'pink'))
-table.insert(characters, Character.new('ghost', 'blue'))
-table.insert(characters, Character.new('ghost', 'orange'))
 
 -------------------------------------------------------------------------------
 -- Non-love functions.
@@ -370,7 +357,9 @@ function set_music(music)
   local m = music_bools[music]
   local clips = {weeoo, bwop}
   for i = 1, 2 do
-    if m[i] then clips[i]:play() else clips[i]:pause() end
+    if clips[i] then
+      if m[i] then clips[i]:play() else clips[i]:pause() end
+    end
   end
 end
 
@@ -415,7 +404,6 @@ function set_weeoo(speed)
 end
 
 function start_new_game()
-  set_weeoo(1)
 
   superdots = hash_from_list({{2.5, 4}, {18.5, 4}, {2.5, 17.5}, {18.5, 17.5}})
 
@@ -440,6 +428,25 @@ function start_new_game()
   end
 
   for x = 1, #map do for y = 1, #(map[1]) do add_dots(x, y) end end
+
+  characters = {}
+  events.add(2, begin_play)
+  pause_till = math.huge
+end
+
+function begin_play()
+  man = Character.new('hero', 'yellow')
+  table.insert(characters, man)
+
+  red = Character.new('ghost', 'red')
+  table.insert(characters, red)
+
+  table.insert(characters, Character.new('ghost', 'pink'))
+  table.insert(characters, Character.new('ghost', 'blue'))
+  table.insert(characters, Character.new('ghost', 'orange'))
+
+  set_weeoo(1)
+  pause_till = 0
 end
 
 function set_game_mode(new_mode)
@@ -462,7 +469,7 @@ end
 -------------------------------------------------------------------------------
 
 function draw_start_screen()
-  love.graphics.print('start screen', 10, 10)
+  love.graphics.print('press any key to play', 10, 10)
 end
 
 function update_start_screen(dt)
@@ -546,28 +553,3 @@ function love.load()
   love.keypressed = keypressed_start_screen
 end
 
---[[
-function love.draw()
-  if game_mode == 'start screen' then
-    draw_start_screen()
-  elseif game_mode == 'playing' then
-    draw_playing_screen()
-  else
-    print('Error: Unexpected game_mode=' .. game_mode)
-  end
-end
-
-function love.keypressed(key)
-  local dirs = {up = {0, -1}, down = {0, 1}, left = {-1, 0}, right = {1, 0}}
-  dir_request(dirs[key])
-end
-
-function love.update(dt)
-end
-
-function love.joystickpressed(joystick, button)
-  -- These button numbers work for the PS3 controller.
-  local dirs = {[5] = {0, -1}, [6] = {1, 0}, [7] = {0, 1}, [8] = {-1, 0}}
-  dir_request(dirs[button])
-end
-]]

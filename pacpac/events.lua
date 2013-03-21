@@ -51,17 +51,19 @@ local events_by_id = {}  -- A dict with key = event_id, value = event table.
 
 local function insert(event_id)
   local event = events_by_id[event_id]
+  local e = event_ids_by_time
   local i = 1
-  while i <= #events_by_id and events_by_id[i].time < event.time do
+  while i <= #e and events_by_id[e[i]].time < event.time do
     i = i + 1
   end
-  table.insert(events_by_id, i, event_id)
+  table.insert(event_ids_by_time, i, event_id)
 end
 
 local function remove(event_id)
-  for i = 1, #events_by_id do
-    if events_by_id[i] == event_id then
-      table.remove(events_by_id, i)
+  local e = event_ids_by_time
+  for i = 1, #e do
+    if e[i] == event_id then
+      table.remove(event_ids_by_time, i)
       return
     end
   end
