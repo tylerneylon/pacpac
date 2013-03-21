@@ -5,6 +5,7 @@
   ]]
 
 local Character = require('Character')
+local events = require('events')
 
 -------------------------------------------------------------------------------
 -- Declare all globals here.
@@ -483,6 +484,7 @@ end
 function love.update(dt)
   clock = clock + dt
 
+  events.update(dt)
   check_jstick_if_present()
   update_ghost_mode()
   update_audio()
