@@ -35,7 +35,7 @@ global_singleton[selfname] = M
 local events = require('events')
 
 -- Load in the notes audio.
-local note_names = {'c1', 'g1', 'c2', 'g2', 'c3', 'd3', 'e3', 'c4'}
+local note_names = {'c1', 'g1', 'c2', 'e2-', 'g2', 'c3', 'd3', 'e3', 'c4'}
 local notes = {}
 for k, v in pairs(note_names) do
   notes[v] = love.audio.newSource('audio/notes/' .. v .. '.ogg', 'static')

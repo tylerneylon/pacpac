@@ -279,6 +279,10 @@ function draw_lives_left()
   end
 end
 
+function play_game_over_music()
+  notes.play_song({'g2', 'g2', 'e2-', 'e2-', 'c2', 'c2', 'c2'}, 0.1)
+end
+
 function check_for_hit()
   for k, character in pairs(characters) do
     if character ~= man and man:dist(character) < 0.5 then
@@ -299,6 +303,7 @@ function check_for_hit()
           show_message_till = math.huge
           pause_till = math.huge
           game_over = true
+          events.add(1, play_game_over_music)
         end
 
         -- Move the ghosts and the hero back home.
