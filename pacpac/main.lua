@@ -6,6 +6,7 @@
 
 local Character = require('Character')
 local events = require('events')
+local notes = require('notes')
 
 -------------------------------------------------------------------------------
 -- Declare all globals here.
@@ -430,8 +431,12 @@ function start_new_game()
   for x = 1, #map do for y = 1, #(map[1]) do add_dots(x, y) end end
 
   characters = {}
-  events.add(2, begin_play)
+  events.add(2.55, begin_play)
   pause_till = math.huge
+  local song = {{'c2', 'c3'}, 'c3', 'c3', 'c3', {'c2', 'e3'}, 0, 'c3',
+                {'g1', 'd3'}, 0, 'c3', {'g1', 'd3'}, 'c3', {'c2', 'e3'},
+                0, 'g2', 0, {'c1', 'c4'}}
+  notes.play_song(song, 0.15)
 end
 
 function begin_play()
@@ -539,7 +544,7 @@ function love.load()
   bwop = PacSource.new("audio/bwop.ogg")
   bwop:setLooping(true)
   death_noise = PacSource.new("audio/death.ogg")
-  death_noise:setVolume(0.4)
+  death_noise:setVolume(0.3)
 
   jstick = (love.joystick.getNumJoysticks() > 0)
   if jstick then
