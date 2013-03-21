@@ -31,6 +31,9 @@ map = {{1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
        {1, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 1, 2, 1, 0, 0, 0, 1, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1}}
 
+-- This can also be 'playing'.
+game_mode = 'start screen'
+
 superdots = nil -- Value given below.
 num_dots = 0
 
@@ -203,17 +206,18 @@ function draw_wall(x, y)
                        math.floor(x2 + 0.5) + 0.5, math.floor(y2 + 0.5) + 0.5)
   end
 
-  local w = 0.75  -- A parameter for how to draw the walls.
+  local w = 0.7  -- A parameter for how to draw the walls. 0.7 looks good.
   local ww = 1.0 - w
   local map_pt = {x, y}
 
   if m(map_pt) == 3 then
     love.graphics.setColor(255, 200, 200)
+    local z = w - 0.5
     local h = w * 0.2
     love.graphics.rectangle('fill',
-                            (x - ww) * tile_size + 2,
+                            (x - z) * tile_size + 1,
                             (y + (1 - h) / 2) * tile_size,
-                            (1 + 2 * ww) * tile_size - 1,
+                            (1 + 2 * z) * tile_size,
                             tile_size * h)
     return
   end
@@ -409,27 +413,7 @@ function set_weeoo(speed)
   weeoo:play()
 end
 
--------------------------------------------------------------------------------
--- Love functions.
--------------------------------------------------------------------------------
-
-function love.load()
-
-  wata = PacSource.new("audio/watawata.ogg")
-  wata:setLooping(true)
-  set_weeoo(1)
-  bwop = PacSource.new("audio/bwop.ogg")
-  bwop:setLooping(true)
-  death_noise = PacSource.new("audio/death.ogg")
-  death_noise:setVolume(0.4)
-
-  jstick = (love.joystick.getNumJoysticks() > 0)
-  if jstick then
-    print('Detected ' .. love.joystick.getName(1))
-  else
-    print('No joystick detected.')
-  end
-
+function start_new_game()
   superdots = hash_from_list({{2.5, 4}, {18.5, 4}, {2.5, 17.5}, {18.5, 17.5}})
 
   -- This will be a hash set of all dot locations.
@@ -455,8 +439,42 @@ function love.load()
   for x = 1, #map do for y = 1, #(map[1]) do add_dots(x, y) end end
 end
 
-function love.draw()
+function set_game_mode(new_mode)
+  game_mode = new_mode
+  if game_mode == 'start_screen' then
+    love.draw = draw_start_screen
+    love.update = update_start_screen
+    love.keypressed = keypressed_start_screen
+    love.joystickpressed = nil
+  elseif game_mode == 'playing' then
+    love.draw = draw_playing
+    love.update = update_playing
+    love.keypressed = keypressed_playing
+    love.joystickpressed = joystickpressed_playing
+  end
+end
 
+-------------------------------------------------------------------------------
+-- Start screen key functions.
+-------------------------------------------------------------------------------
+
+function draw_start_screen()
+  love.graphics.print('start screen', 10, 10)
+end
+
+function update_start_screen(dt)
+end
+
+function keypressed_start_screen(key)
+  start_new_game()
+  set_game_mode('playing')
+end
+
+-------------------------------------------------------------------------------
+-- Playing key functions.
+-------------------------------------------------------------------------------
+
+function draw_playing()
   -- Draw walls.
   for x = 1, #map do for y = 1, #(map[1]) do
     if map[x][y] == 1 or map[x][y] == 3 then
@@ -476,12 +494,7 @@ function love.draw()
   draw_score()
 end
 
-function love.keypressed(key)
-  local dirs = {up = {0, -1}, down = {0, 1}, left = {-1, 0}, right = {1, 0}}
-  dir_request(dirs[key])
-end
-
-function love.update(dt)
+function update_playing(dt)
   clock = clock + dt
 
   events.update(dt)
@@ -494,8 +507,65 @@ function love.update(dt)
   check_for_hit()
 end
 
+function keypressed_playing(key)
+  local dirs = {up = {0, -1}, down = {0, 1}, left = {-1, 0}, right = {1, 0}}
+  dir_request(dirs[key])
+end
+
+function joystickpressed_playing(joystick, button)
+  -- These button numbers work for the PS3 controller.
+  local dirs = {[5] = {0, -1}, [6] = {1, 0}, [7] = {0, 1}, [8] = {-1, 0}}
+  dir_request(dirs[button])
+end
+
+
+-------------------------------------------------------------------------------
+-- Love functions.
+-------------------------------------------------------------------------------
+
+function love.load()
+  wata = PacSource.new("audio/watawata.ogg")
+  wata:setLooping(true)
+  set_weeoo(1)
+  bwop = PacSource.new("audio/bwop.ogg")
+  bwop:setLooping(true)
+  death_noise = PacSource.new("audio/death.ogg")
+  death_noise:setVolume(0.4)
+
+  jstick = (love.joystick.getNumJoysticks() > 0)
+  if jstick then
+    print('Detected ' .. love.joystick.getName(1))
+  else
+    print('No joystick detected.')
+  end
+
+  love.draw = draw_start_screen
+  love.update = update_start_screen
+  love.keypressed = keypressed_start_screen
+end
+
+--[[
+function love.draw()
+  if game_mode == 'start screen' then
+    draw_start_screen()
+  elseif game_mode == 'playing' then
+    draw_playing_screen()
+  else
+    print('Error: Unexpected game_mode=' .. game_mode)
+  end
+end
+
+function love.keypressed(key)
+  local dirs = {up = {0, -1}, down = {0, 1}, left = {-1, 0}, right = {1, 0}}
+  dir_request(dirs[key])
+end
+
+function love.update(dt)
+end
+
 function love.joystickpressed(joystick, button)
   -- These button numbers work for the PS3 controller.
   local dirs = {[5] = {0, -1}, [6] = {1, 0}, [7] = {0, 1}, [8] = {-1, 0}}
   dir_request(dirs[button])
 end
+]]
