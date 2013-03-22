@@ -16,7 +16,8 @@ local M = {}
 -- between_notes is an optional parameter specifying time between note starts.
 -- The default 0.3 seconds.
 -- done_cb is an optional callback called at the end of a song.
--- note_db is an optional callback called as each note is played.
+-- note_db is an optional callback called as each note is played; it receives
+-- the note begin played as a parameter.
 -- The return value is a song_id that can be used to stop the song early.
 function M.play_song(song, between_notes, done_cb, note_cb) end
 
@@ -59,7 +60,7 @@ local function _play_song(song_id, song, between_notes, done_cb, note_cb)
     if done_cb then done_cb() end
     return
   end
-  if note_cb then note_cb() end
+  if note_cb then note_cb(song[1]) end
   if not between_notes then between_notes = 0.3 end
 
   play_note(song[1], note_cb)

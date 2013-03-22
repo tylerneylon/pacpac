@@ -297,6 +297,22 @@ end
 function play_start_screen_music()
   local ending = 1
   local betw_time = 0.12
+  local offset = 0  -- Alternates between 0 and 1.
+
+  function note_played(note)
+    if note == 0 then return end
+
+    -- Set up dir to either left or right based on offset.
+    local dir = {offset * 2 - 1, 0}
+    if note == 'c1' then
+      dir = {0, 1}
+    elseif note == 'c3' then
+      dir = {0, -1}
+    end
+    character_dance(dir)
+
+    offset = 1 - offset
+  end
 
   function play()
     local last_note = 'c1'
@@ -305,7 +321,7 @@ function play_start_screen_music()
                'g2', 0, 'g2', 0, 'c2', 0, 'g1', 0, 'c2', 0, 0, 'g1',
                'c2', 0, 0, 0, last_note, 0, 0, 0}
     if game_mode == 'start screen' then
-      start_song_id = notes.play_song(s, betw_time, play)
+      start_song_id = notes.play_song(s, betw_time, play, note_played)
     end
     ending = 3 - ending
   end
@@ -509,6 +525,7 @@ function start_new_game()
 end
 
 function begin_play()
+  characters = {}
   man = Character.new('hero', 'yellow')
   table.insert(characters, man)
 
@@ -526,6 +543,7 @@ end
 function set_game_mode(new_mode)
   game_mode = new_mode
   if game_mode == 'start screen' then
+    setup_start_screen_characters()
     love.draw = draw_start_screen
     love.update = update_start_screen
     love.keypressed = keypressed_start_screen
@@ -538,16 +556,53 @@ function set_game_mode(new_mode)
   end
 end
 
+function character_dance(dir)
+  local y = 20
+  local tw = math.floor(love.graphics.getWidth() / tile_size)
+  for k, c in pairs(characters) do
+    local j = k
+    if j == 1 or j == 3 then
+      j = 4 - j  -- Map 1 -> 3, 3 -> 1 to put the hero in the middle.
+    end
+    local x = j * 2 + tw / 2 - 6
+    c.x = x + 0.4 * dir[1]
+    c.y = y + 0.4 * dir[2]
+    c.dir = dir
+  end
+end
+
+function setup_start_screen_characters()
+  characters = {}
+  local y = 20
+  local colors = {'yellow', 'red', 'pink', 'blue', 'orange'}
+  local tw = math.floor(love.graphics.getWidth() / tile_size)
+
+  for k, color in pairs(colors) do
+    local shape = 'ghost'
+    local j = k
+    if j == 1 or j == 3 then
+      j = 4 - j  -- Map 1 -> 3, 3 -> 1 to put the hero in the middle.
+    end
+    local x = j * 2 + tw / 2 - 6
+    if color == 'yellow' then shape = 'hero' end
+    local c = Character.new(shape, color)
+    c.x = x
+    c.y = y
+    table.insert(characters, c)
+  end
+end
+
+
 -------------------------------------------------------------------------------
 -- Start screen key functions.
 -------------------------------------------------------------------------------
 
 function draw_start_screen()
-  love.graphics.print('press any key to play', 400, 400)
 
   -- Draw the logo.
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
   local logo_w = logo:getWidth()
+  love.graphics.setColor(255, 255, 255)
   love.graphics.draw(logo, math.floor((w - logo_w) / 2), 100)
 
   -- Draw the dot border.
@@ -556,6 +611,9 @@ function draw_start_screen()
   superdots = hash_from_list(superdots)
   for x = 0, tw do for y = 0, th, th do draw_one_dot(x + 0.5, y + 0.5) end end
   for x = 0, tw, tw do for y = 0, th do draw_one_dot(x + 0.5, y + 0.5) end end
+
+  -- Draw the characters.
+  for k, c in pairs(characters) do c:draw() end
 end
 
 function update_start_screen(dt)
