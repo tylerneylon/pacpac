@@ -552,7 +552,7 @@ function set_game_mode(new_mode)
     love.draw = draw_start_screen
     love.update = update_start_screen
     love.keypressed = keypressed_start_screen
-    love.joystickpressed = nil
+    love.joystickpressed = joystickpressed_start_screen
   elseif game_mode == 'playing' then
     love.graphics.setFont(small_font)
     love.draw = draw_playing
@@ -675,6 +675,10 @@ function keypressed_start_screen(key)
   stop_start_screen_music()
   start_new_game()
   set_game_mode('playing')
+end
+
+function joystickpressed_start_screen(joystick, button)
+  keypressed_start_screen()  -- Start a game.
 end
 
 -------------------------------------------------------------------------------
