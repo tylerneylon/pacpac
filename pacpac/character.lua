@@ -283,8 +283,15 @@ function Character:draw()
                         start + 2 * math.pi - mouth_angle / 2, 16)
     end
   else  -- It's a ghost.
+    local is_inverted_weak = false
     if self:is_weak() then
       love.graphics.setColor(0, 0, 255)
+      local time_left = super_mode_till - clock
+      is_inverted_weak = time_left < 2 and
+          (math.floor(time_left * 3) % 2 == 0)
+      if is_inverted_weak then
+        love.graphics.setColor(255, 255, 255)
+      end
     end
     if not self:is_dead() then
       -- Draw the ghost body.
@@ -308,6 +315,7 @@ function Character:draw()
     end
     -- Draw the eyes.
     love.graphics.setColor(255, 255, 255)
+    if is_inverted_weak then love.graphics.setColor(0, 0, 255) end
     for i = -1, 1, 2 do
       local dx = i * 5
       local radius = 4
