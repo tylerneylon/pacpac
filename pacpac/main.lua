@@ -175,8 +175,15 @@ end
 -- The input x, y is the center of the dot in tile-based coordinates.
 function draw_one_dot(x, y, is_superdot)
   local dot_size = 1
-  if is_superdot or superdots[str({x, y})] then dot_size = 4 end
-  love.graphics.setColor(255, 255, 255)
+  is_superdot = is_superdot or superdots[str({x, y})]
+  if is_superdot then dot_size = 4 end
+  local flash_rate = 0.2  -- In seconds.
+  -- Don't draw superdots every other cycle.
+  if is_superdot and math.floor(clock / flash_rate) % 2 == 1 and
+     pause_till <= clock then
+    return
+  end
+  love.graphics.setColor(255, 220, 128)
   love.graphics.circle('fill',
                        x * tile_size,
                        y * tile_size,
@@ -552,6 +559,7 @@ function draw_start_screen()
 end
 
 function update_start_screen(dt)
+  clock = clock + dt
   events.update(dt)
 end
 
