@@ -65,6 +65,8 @@ score = 0
 
 jstick = nil
 
+logo = nil
+
 -- Sound-related variables.
 
 wata = nil
@@ -534,7 +536,10 @@ end
 -------------------------------------------------------------------------------
 
 function draw_start_screen()
+  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
   love.graphics.print('press any key to play', 10, 10)
+  local logo_w = logo:getWidth()
+  love.graphics.draw(logo, math.floor((w - logo_w) / 2), 100)
 end
 
 function update_start_screen(dt)
@@ -601,6 +606,8 @@ end
 -------------------------------------------------------------------------------
 
 function love.load()
+  logo = love.graphics.newImage('img/pacpac_logo.png')
+
   wata = PacSource.new('audio/watawata.ogg')
   wata:setLooping(true)
   bwop = PacSource.new('audio/bwop.ogg')
