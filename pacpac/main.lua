@@ -335,7 +335,9 @@ function play_start_screen_music()
 end
 
 function stop_start_screen_music()
-  notes.stop_song(start_song_id)
+  if start_song_id then
+    notes.stop_song(start_song_id)
+  end
 end
 
 function play_game_over_music()
