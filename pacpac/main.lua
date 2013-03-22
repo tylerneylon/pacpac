@@ -66,6 +66,8 @@ score = 0
 jstick = nil
 
 logo = nil
+large_font = nil
+small_font = nil
 
 -- Sound-related variables.
 
@@ -549,6 +551,7 @@ function set_game_mode(new_mode)
     love.keypressed = keypressed_start_screen
     love.joystickpressed = nil
   elseif game_mode == 'playing' then
+    love.graphics.setFont(small_font)
     love.draw = draw_playing
     love.update = update_playing
     love.keypressed = keypressed_playing
@@ -557,7 +560,7 @@ function set_game_mode(new_mode)
 end
 
 function character_dance(dir)
-  local y = 20
+  local y = 25
   local tw = math.floor(love.graphics.getWidth() / tile_size)
   for k, c in pairs(characters) do
     local j = k
@@ -573,7 +576,7 @@ end
 
 function setup_start_screen_characters()
   characters = {}
-  local y = 20
+  local y = 25
   local colors = {'yellow', 'red', 'pink', 'blue', 'orange'}
   local tw = math.floor(love.graphics.getWidth() / tile_size)
 
@@ -590,6 +593,21 @@ function setup_start_screen_characters()
     c.y = y
     table.insert(characters, c)
   end
+end
+
+function draw_start_text()
+  local w = love.graphics.getWidth()
+  love.graphics.setFont(large_font)
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.printf('Start', 0, 400, w, 'center')
+
+  if math.floor(clock / 0.3) % 2 == 0 then
+    love.graphics.setColor(100, 100, 100)
+  else
+    love.graphics.setColor(0, 0, 0)
+  end
+  local vertices = {568, 409, 583, 417, 568, 425}
+  love.graphics.polygon('fill', vertices)
 end
 
 
@@ -614,6 +632,8 @@ function draw_start_screen()
 
   -- Draw the characters.
   for k, c in pairs(characters) do c:draw() end
+
+  draw_start_text()
 end
 
 function update_start_screen(dt)
@@ -681,6 +701,9 @@ end
 -------------------------------------------------------------------------------
 
 function love.load()
+  small_font = love.graphics.newFont('8bitoperator_jve.ttf', 16)
+  large_font = love.graphics.newFont('8bitoperator_jve.ttf', 32)
+
   logo = love.graphics.newImage('img/pacpac_logo.png')
 
   wata = PacSource.new('audio/watawata.ogg')
