@@ -32,8 +32,8 @@ map = {{1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
        {1, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 1, 2, 1, 0, 0, 0, 1, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1}}
 
--- This can also be 'playing'.
-game_mode = 'start screen'
+-- This can be 'start screen' or 'playing'.
+game_mode = nil
 
 superdots = nil -- Value given below.
 num_dots = 0
@@ -75,6 +75,9 @@ death_noise = nil
 nomnomz = {}
 nomnomz_index = 1
 runny = nil
+open_noise = nil
+
+start_song_id = nil
 
 -------------------------------------------------------------------------------
 -- Define the PacSource class.
@@ -282,6 +285,29 @@ function draw_lives_left()
   end
 end
 
+function play_start_screen_music()
+  local ending = 1
+  local betw_time = 0.12
+
+  function play()
+    local last_note = 'c1'
+    if ending == 2 then last_note = 'c3' end
+    local s = {'c2', 0, 'c2', 0, 'g2', 0, 'g2', 0, 'c2', 0, 'c2', 'c2',
+               'g2', 0, 'g2', 0, 'c2', 0, 'g1', 0, 'c2', 0, 0, 'g1',
+               'c2', 0, 0, 0, last_note, 0, 0, 0}
+    if game_mode == 'start screen' then
+      start_song_id = notes.play_song(s, betw_time, play)
+    end
+    ending = 3 - ending
+  end
+
+  play()
+end
+
+function stop_start_screen_music()
+  notes.stop_song(start_song_id)
+end
+
 function play_game_over_music()
   notes.play_song({'g2', 'g2', 'e2-', 'e2-', 'c2', 'c2', 'c2'}, 0.1)
 end
@@ -353,6 +379,7 @@ end
 -- Input is similar to {0, 1}, which would be a request to go right.
 function dir_request(dir)
   if dir == nil then return end
+  if man == nil then return end
   if man:can_go_in_dir(dir) then
     man.dir = dir
   else
@@ -489,7 +516,7 @@ end
 
 function set_game_mode(new_mode)
   game_mode = new_mode
-  if game_mode == 'start_screen' then
+  if game_mode == 'start screen' then
     love.draw = draw_start_screen
     love.update = update_start_screen
     love.keypressed = keypressed_start_screen
@@ -511,9 +538,11 @@ function draw_start_screen()
 end
 
 function update_start_screen(dt)
+  events.update(dt)
 end
 
 function keypressed_start_screen(key)
+  stop_start_screen_music()
   start_new_game()
   set_game_mode('playing')
 end
@@ -556,13 +585,11 @@ function update_playing(dt)
 end
 
 function keypressed_playing(key)
-  if man == nil then return end
   local dirs = {up = {0, -1}, down = {0, 1}, left = {-1, 0}, right = {1, 0}}
   dir_request(dirs[key])
 end
 
 function joystickpressed_playing(joystick, button)
-  if man == nil then return end
   -- These button numbers work for the PS3 controller.
   local dirs = {[5] = {0, -1}, [6] = {1, 0}, [7] = {0, 1}, [8] = {-1, 0}}
   dir_request(dirs[button])
@@ -588,6 +615,10 @@ function love.load()
   runny = PacSource.new('audio/runny.ogg')
   runny:setLooping(true)
   runny:setVolume(0.08)
+  open_noise = PacSource.new('audio/open.ogg')
+  open_noise:setVolume(0.5)
+  open_noise:play()
+  events.add(0.5, play_start_screen_music)
 
   jstick = (love.joystick.getNumJoysticks() > 0)
   if jstick then
@@ -596,8 +627,6 @@ function love.load()
     print('No joystick detected.')
   end
 
-  love.draw = draw_start_screen
-  love.update = update_start_screen
-  love.keypressed = keypressed_start_screen
+  set_game_mode('start screen')
 end
 

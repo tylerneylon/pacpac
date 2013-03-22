@@ -82,6 +82,7 @@ function M.add(delay, callback, name)
   local event = {time = clock + delay, callback = callback}
   events_by_id[event_id] = event
   insert(event_id)  -- Inserts into event_ids_by_time.
+  return event_id
 end
 
 function M.cancel(event_id)

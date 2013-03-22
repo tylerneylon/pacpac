@@ -15,17 +15,12 @@ local M = {}
 -- "c3" or an array of strings which will be played simulateneously.
 -- between_notes is an optional parameter specifying time between note starts.
 -- The default 0.3 seconds.
-function M.play_song(song, between_notes) end
+-- done_cb is an optional callback called at the end of a song.
+-- note_db is an optional callback called as each note is played.
+-- The return value is a song_id that can be used to stop the song early.
+function M.play_song(song, between_notes, done_cb, note_cb) end
 
-
--------------------------------------------------------------------------------
--- Singleton wrapper.
--------------------------------------------------------------------------------
-
-local selfname = debug.getinfo(1).source
-if not global_singleton then global_singleton = {} end
-if global_singleton[selfname] then return global_singleton[selfname] end
-global_singleton[selfname] = M
+function M.stop_song(song_id) end
 
 
 -------------------------------------------------------------------------------
@@ -33,13 +28,15 @@ global_singleton[selfname] = M
 -------------------------------------------------------------------------------
 
 local events = require('events')
+local next_song_id = 1
+local event_ids_per_song_id = {}
 
 -- Load in the notes audio.
 local note_names = {'c1', 'g1', 'c2', 'e2-', 'g2', 'c3', 'd3', 'e3', 'c4'}
 local notes = {}
 for k, v in pairs(note_names) do
   notes[v] = love.audio.newSource('audio/notes/' .. v .. '.ogg', 'static')
-  notes[v]:setVolume(0.5)
+  notes[v]:setVolume(0.7)
 end
 
 local function play_note(note)
@@ -57,22 +54,58 @@ local function play_note(note)
   end
 end
 
+local function _play_song(song_id, song, between_notes, done_cb, note_cb)
+  if #song == 0 then
+    if done_cb then done_cb() end
+    return
+  end
+  if note_cb then note_cb() end
+  if not between_notes then between_notes = 0.3 end
+
+  play_note(song[1], note_cb)
+  table.remove(song, 1)
+
+  function play_rest()
+    _play_song(song_id, song, between_notes, done_cb, note_cb)
+  end
+
+  local e_id = events.add(between_notes, play_rest)
+  event_ids_per_song_id[song_id] = e_id
+  return song_id
+end
+
+-- Useful for debugging.
+local function traceback()
+  local level = 1
+  while true do
+    local info = debug.getinfo(level, "Sl")
+    if not info then break end
+    if info.what == "C" then   -- is a C function?
+      print(level, "C function")
+    else   -- a Lua function
+      print(string.format("[%s]:%d",
+                          info.short_src, info.currentline))
+    end
+    level = level + 1
+  end
+end
+
 -------------------------------------------------------------------------------
 -- Public function definitions.
 -------------------------------------------------------------------------------
 
-function M.play_song(song, between_notes)
-  if #song == 0 then return end
-  if not between_notes then between_notes = 0.3 end
-  play_note(song[1])
-  table.remove(song, 1)
 
-  function play_rest()
-    M.play_song(song, between_notes)
-  end
-
-  events.add(between_notes, play_rest)
+function M.play_song(song, between_notes, done_cb, note_cb)
+  local song_id = next_song_id
+  next_song_id = next_song_id + 1
+  _play_song(song_id, song, between_notes, done_cb, note_cb)
+  return song_id
 end
+
+function M.stop_song(song_id)
+  events.cancel(event_ids_per_song_id[song_id])
+end
+
 
 return M
 
