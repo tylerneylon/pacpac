@@ -38,7 +38,7 @@ game_mode = nil
 superdots = {} -- Value given below.
 num_dots = 0
 
-tile_size = 22
+tile_size = 28
 
 man_x = 10.5
 man_y = 17.5
@@ -565,7 +565,7 @@ function set_game_mode(new_mode)
 end
 
 function character_dance(dir)
-  local y = 20
+  local y = 16
   local tw = math.floor(love.graphics.getWidth() / tile_size)
   for k, c in pairs(characters) do
     local j = k
@@ -688,6 +688,8 @@ end
 -------------------------------------------------------------------------------
 
 function draw_playing()
+  love.graphics.translate(345, 0)
+
   -- Draw walls.
   for x = 1, #map do for y = 1, #(map[1]) do
     if map[x][y] == 1 or map[x][y] == 3 then

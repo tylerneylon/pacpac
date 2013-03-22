@@ -273,14 +273,14 @@ function Character:draw()
       love.graphics.arc('fill', self.x * tile_size, self.y * tile_size,
                         tile_size * r,
                         start + mouth_angle / 2,
-                        start + 2 * math.pi - mouth_angle / 2, 10)
+                        start + 2 * math.pi - mouth_angle / 2, 16)
     else
       local mouth_angle = max * (math.sin((clock % p) / p * 2 * math.pi) + 1.0)
       local start = math.atan2(self.dir[2], self.dir[1])
       love.graphics.arc('fill', self.x * tile_size, self.y * tile_size,
                         tile_size * r,
                         start + mouth_angle / 2,
-                        start + 2 * math.pi - mouth_angle / 2, 10)
+                        start + 2 * math.pi - mouth_angle / 2, 16)
     end
   else  -- It's a ghost.
     if self:is_weak() then
@@ -290,12 +290,12 @@ function Character:draw()
       -- Draw the ghost body.
       local r = 0.45
       love.graphics.circle('fill', self.x * tile_size,
-                           self.y * tile_size, tile_size * r, 10)
+                           self.y * tile_size, tile_size * r, 14)
       local vertices = {(self.x + r) * tile_size, self.y * tile_size,
                         (self.x - r) * tile_size, self.y * tile_size}
-      local n = 5
+      local n = 7
       local left = (self.x - r) * tile_size
-      local bottom = (self.y + 0.4) * tile_size
+      local bottom = (self.y + 0.45) * tile_size
       for i = 0, n - 1 do
         local dy = 2 * (1 - (i % 2) * 2)
         table.insert(vertices, left + (i / (n - 1)) * tile_size * (2 * r))
@@ -306,8 +306,8 @@ function Character:draw()
     -- Draw the eyes.
     love.graphics.setColor(255, 255, 255)
     for i = -1, 1, 2 do
-      local dx = i * 4
-      local radius = 3
+      local dx = i * 5
+      local radius = 4
       if self:is_weak() then radius = 2 end
       love.graphics.circle('fill', self.x * tile_size + dx,
                            (self.y - 0.1) * tile_size, radius, 10)
@@ -316,9 +316,9 @@ function Character:draw()
       -- Draw the pupils.
       love.graphics.setColor(0, 0, 192)
       for i = -1, 1, 2 do
-        local dx = i * 4
-        love.graphics.circle('fill', self.x * tile_size + dx + self.dir[1],
-                             (self.y - 0.1) * tile_size + self.dir[2], 2.0, 10)
+        local dx = i * 5
+        love.graphics.circle('fill', self.x * tile_size + dx + 1.5 * self.dir[1],
+                             (self.y - 0.1) * tile_size + self.dir[2], 2.5, 10)
       end
     elseif self:is_weak() then
       -- We're in super mode; draw a wavy mouth.

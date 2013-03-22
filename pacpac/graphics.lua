@@ -1,0 +1,4 @@
+-- graphics.lua
+--
+-- Encapsulate love.graphics drawing functions so we can apply
+-- universal transformations easily.
