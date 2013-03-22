@@ -64,6 +64,8 @@ next_music_speedup = -1
 score = 0
 
 jstick = nil
+jstick_img = nil
+jstick_overlay = nil
 
 logo = nil
 large_font = nil
@@ -560,7 +562,7 @@ function set_game_mode(new_mode)
 end
 
 function character_dance(dir)
-  local y = 25
+  local y = 20
   local tw = math.floor(love.graphics.getWidth() / tile_size)
   for k, c in pairs(characters) do
     local j = k
@@ -593,21 +595,36 @@ function setup_start_screen_characters()
     c.y = y
     table.insert(characters, c)
   end
+  character_dance({0, 0})
 end
 
 function draw_start_text()
   local w = love.graphics.getWidth()
+  local dy = -50
   love.graphics.setFont(large_font)
   love.graphics.setColor(255, 255, 255)
-  love.graphics.printf('Start', 0, 400, w, 'center')
+  love.graphics.printf('Start', 0, 400 + dy, w, 'center')
 
   if math.floor(clock / 0.3) % 2 == 0 then
     love.graphics.setColor(100, 100, 100)
   else
     love.graphics.setColor(0, 0, 0)
   end
-  local vertices = {568, 409, 583, 417, 568, 425}
+  local vertices = {568, 409 + dy, 583, 417 + dy, 568, 425 + dy}
   love.graphics.polygon('fill', vertices)
+end
+
+function draw_controls()
+  local x, y = 528, 500
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.draw(jstick_img, x, y)
+  local alpha = 255 * (math.sin(clock * 5) + 1) / 2
+  love.graphics.setColor(alpha, alpha, alpha)
+  love.graphics.draw(jstick_overlay, x, y)
+
+  love.graphics.setFont(small_font)
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.print('Controls', 578, 631)
 end
 
 
@@ -634,6 +651,7 @@ function draw_start_screen()
   for k, c in pairs(characters) do c:draw() end
 
   draw_start_text()
+  draw_controls()
 end
 
 function update_start_screen(dt)
@@ -705,6 +723,8 @@ function love.load()
   large_font = love.graphics.newFont('8bitoperator_jve.ttf', 32)
 
   logo = love.graphics.newImage('img/pacpac_logo.png')
+  jstick_img = love.graphics.newImage('img/gamepad.png')
+  jstick_overlay = love.graphics.newImage('img/gamepad_overlay.png')
 
   wata = PacSource.new('audio/watawata.ogg')
   wata:setLooping(true)
