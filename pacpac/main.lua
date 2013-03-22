@@ -629,4 +629,3 @@ function love.load()
 
   set_game_mode('start screen')
 end
-
