@@ -72,6 +72,8 @@ logo = nil
 large_font = nil
 small_font = nil
 
+say_ready_till = 0
+
 -- Sound-related variables.
 
 wata = nil
@@ -401,12 +403,15 @@ end
 function draw_message()
   if show_message_till < clock then return end 
   love.graphics.setColor(255, 255, 255)
-  love.graphics.print(message, 8 * tile_size, 23.5 * tile_size)
+  local t = 14  -- Tweak the positioning.
+  love.graphics.printf(message, t, 23.25 * tile_size,
+                       21 * tile_size - t, 'center')
 end
 
 function draw_score()
   love.graphics.setColor(255, 255, 255)
-  love.graphics.print('Score: ' .. score, 16 * tile_size, 23.5 * tile_size)
+  love.graphics.setFont(large_font)
+  love.graphics.printf(score, 0, 23.25 * tile_size, 20 * tile_size, 'right')
 end
 
 -- Input is similar to {0, 1}, which would be a request to go right.
@@ -524,11 +529,13 @@ function start_new_game()
   for x = 1, #map do for y = 1, #(map[1]) do add_dots(x, y) end end
 
   characters = {}
-  events.add(2.55, begin_play)
+  local startup_time = 2.55
+  events.add(startup_time, begin_play)
   pause_till = math.huge
   local song = {{'c2', 'c3'}, 'c3', 'c3', 'c3', {'c2', 'e3'}, 0, 'c3',
                 {'g1', 'd3'}, 0, 'c3', {'g1', 'd3'}, 'c3', {'c2', 'e3'},
                 0, 'g2', 0, {'c1', 'c4'}}
+  say_ready_till = clock + startup_time
   notes.play_song(song, 0.15)
 end
 
@@ -546,6 +553,18 @@ function begin_play()
 
   set_weeoo(1)
   pause_till = 0
+end
+
+function draw_ready_text()
+  if say_ready_till <= clock then return end
+  love.graphics.setFont(large_font)
+  love.graphics.setColor(0, 0, 0)
+  local y = 12.9
+  love.graphics.rectangle('fill', 7 * tile_size, y * tile_size,
+                          7 * tile_size, 34)
+  love.graphics.setColor(255, 200, 0)
+  love.graphics.printf('Ready!', 7 * tile_size + 4, y * tile_size,
+                       7 * tile_size, 'center')
 end
 
 function set_game_mode(new_mode)
@@ -707,6 +726,7 @@ function draw_playing()
 
   draw_lives_left()
   draw_message()
+  draw_ready_text()
   draw_score()
 end
 
