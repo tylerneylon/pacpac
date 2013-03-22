@@ -35,7 +35,7 @@ map = {{1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 -- This can be 'start screen' or 'playing'.
 game_mode = nil
 
-superdots = nil -- Value given below.
+superdots = {} -- Value given below.
 num_dots = 0
 
 tile_size = 22
@@ -173,9 +173,9 @@ function hash_from_list(list)
 end
 
 -- The input x, y is the center of the dot in tile-based coordinates.
-function draw_one_dot(x, y)
+function draw_one_dot(x, y, is_superdot)
   local dot_size = 1
-  if superdots[str({x, y})] then dot_size = 4 end
+  if is_superdot or superdots[str({x, y})] then dot_size = 4 end
   love.graphics.setColor(255, 255, 255)
   love.graphics.circle('fill',
                        x * tile_size,
@@ -536,10 +536,19 @@ end
 -------------------------------------------------------------------------------
 
 function draw_start_screen()
+  love.graphics.print('press any key to play', 400, 400)
+
+  -- Draw the logo.
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  love.graphics.print('press any key to play', 10, 10)
   local logo_w = logo:getWidth()
   love.graphics.draw(logo, math.floor((w - logo_w) / 2), 100)
+
+  -- Draw the dot border.
+  local tw, th = math.floor(w / tile_size) - 1, math.floor(h / tile_size) - 1
+  superdots = {{.5, .5}, {.5, th + .5}, {tw + .5, .5}, {tw + .5, th + .5}}
+  superdots = hash_from_list(superdots)
+  for x = 0, tw do for y = 0, th, th do draw_one_dot(x + 0.5, y + 0.5) end end
+  for x = 0, tw, tw do for y = 0, th do draw_one_dot(x + 0.5, y + 0.5) end end
 end
 
 function update_start_screen(dt)
