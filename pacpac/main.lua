@@ -66,6 +66,7 @@ score = 0
 jstick = nil
 jstick_img = nil
 jstick_overlay = nil
+keybd_img = nil
 
 logo = nil
 large_font = nil
@@ -615,16 +616,27 @@ function draw_start_text()
 end
 
 function draw_controls()
+  local w = love.graphics.getWidth()
   local x, y = 528, 500
   love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(jstick_img, x, y)
-  local alpha = 255 * (math.sin(clock * 5) + 1) / 2
-  love.graphics.setColor(alpha, alpha, alpha)
-  love.graphics.draw(jstick_overlay, x, y)
+  if jstick then
+    love.graphics.draw(jstick_img, x, y)
+    local alpha = 255 * (math.sin(clock * 5) + 1) / 2
+    love.graphics.setColor(alpha, alpha, alpha)
+    love.graphics.draw(jstick_overlay, x, y)
+  else
+    love.graphics.draw(keybd_img, (w - 200) / 2, y)
+  end
 
   love.graphics.setFont(small_font)
   love.graphics.setColor(255, 255, 255)
-  love.graphics.print('Controls', 578, 631)
+  if jstick then
+    love.graphics.print('Controls', 578, 631)
+  else
+    love.graphics.printf('Controls', 0, 631, w, 'center')
+    love.graphics.setColor(80, 80, 80)
+    love.graphics.printf('no gamepad detected', 0, 651, w, 'center')
+  end
 end
 
 
@@ -725,6 +737,7 @@ function love.load()
   logo = love.graphics.newImage('img/pacpac_logo.png')
   jstick_img = love.graphics.newImage('img/gamepad.png')
   jstick_overlay = love.graphics.newImage('img/gamepad_overlay.png')
+  keybd_img = love.graphics.newImage('img/arrow_keys.png')
 
   wata = PacSource.new('audio/watawata.ogg')
   wata:setLooping(true)
@@ -749,7 +762,7 @@ function love.load()
   if jstick then
     print('Detected ' .. love.joystick.getName(1))
   else
-    print('No joystick detected.')
+    print('No gamepad detected.')
   end
 
   set_game_mode('start screen')
