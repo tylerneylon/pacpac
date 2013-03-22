@@ -179,9 +179,9 @@ end
 
 -- The input x, y is the center of the dot in tile-based coordinates.
 function draw_one_dot(x, y, is_superdot)
-  local dot_size = 1
+  local dot_size = 2
   is_superdot = is_superdot or superdots[str({x, y})]
-  if is_superdot then dot_size = 4 end
+  if is_superdot then dot_size = 6 end
   local flash_rate = 0.2  -- In seconds.
   -- Don't draw superdots every other cycle.
   if is_superdot and math.floor(clock / flash_rate) % 2 == 1 and
@@ -200,6 +200,7 @@ function draw_dots()
 end
 
 function draw_wall(x, y)
+  love.graphics.setLineWidth(3)
 
   -- A shortcut for map[pt[1]][pt[2]].
   function m(pt)

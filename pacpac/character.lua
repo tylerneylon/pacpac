@@ -291,7 +291,8 @@ function Character:draw()
       local r = 0.45
       love.graphics.circle('fill', self.x * tile_size,
                            self.y * tile_size, tile_size * r, 14)
-      local vertices = {(self.x + r) * tile_size, self.y * tile_size,
+
+      local vertices = {self.x * tile_size, self.y * tile_size,
                         (self.x - r) * tile_size, self.y * tile_size}
       local n = 7
       local left = (self.x - r) * tile_size
@@ -301,6 +302,8 @@ function Character:draw()
         table.insert(vertices, left + (i / (n - 1)) * tile_size * (2 * r))
         table.insert(vertices, bottom + dy)
       end
+      table.insert(vertices, (self.x + r) * tile_size)
+      table.insert(vertices, self.y * tile_size)
       love.graphics.polygon('fill', vertices)
     end
     -- Draw the eyes.
@@ -322,11 +325,12 @@ function Character:draw()
       end
     elseif self:is_weak() then
       -- We're in super mode; draw a wavy mouth.
-      local base = {self.x * tile_size - 4.5, self.y * tile_size + 5}
+      love.graphics.setLineWidth(1)
+      local base = {self.x * tile_size - 7.5, self.y * tile_size + 5}
       local last_pt = nil
       for i = 0, 6 do
         local dy = (i % 2) * 2 - 1
-        local pt = {base[1] + i * 1.5, base[2] - dy}
+        local pt = {base[1] + i * 2.5, base[2] - dy}
         if last_pt then
           love.graphics.line(last_pt[1], last_pt[2], pt[1], pt[2])
         end
