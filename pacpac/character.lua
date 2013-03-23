@@ -66,7 +66,7 @@ function Character:speed()
     return 8
   end
   if self:is_weak() then
-    return 3
+    return 2.5
   else
     return 4
   end
@@ -243,7 +243,7 @@ function Character:update(dt)
         if superdots[k] then superdot_eaten() end
         dots[k] = nil
         num_dots = num_dots - 1
-        score = score + 10
+        add_to_score(10)
         play_wata_till = clock + 0.2
         wata:play()
         if num_dots == 0 then

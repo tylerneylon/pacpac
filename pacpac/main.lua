@@ -62,6 +62,7 @@ lives_left = 3
 life_start_time = 0
 next_music_speedup = -1
 score = 0
+hi_score = 0
 ghost_eaten_scores = {}
 next_ghost_score = 200
 
@@ -142,7 +143,7 @@ function superdot_eaten()
     if c.shape == 'ghost' then c.eaten = false end
   end
   super_mode_till = clock + 6.0
-  score = score + 40  -- An additional +10 is given for every dot.
+  add_to_score(40)  -- An additional +10 is given for every dot.
   next_ghost_score = 200
 end
 
@@ -418,11 +419,18 @@ function draw_score()
   love.graphics.setColor(255, 255, 255)
   love.graphics.setFont(large_font)
   love.graphics.printf(score, 0, 23.25 * tile_size, 20 * tile_size, 'right')
+
+  if hi_score == score then
+    love.graphics.setColor(255, 255, 0)
+  end
+  local x, y = 9, -5
+  love.graphics.print('High Score', tile_size + x, y)
+  love.graphics.printf(hi_score, tile_size, y, 19 * tile_size, 'right')
 end
 
-function add_ghost_eaten_score(added_score, x, y)
-  score = score + added_score
-  local s = {score = added_score,
+function add_ghost_eaten_score(points, x, y)
+  add_to_score(points)
+  local s = {score = points,
              x = (x - 0.4) * tile_size,
              y = (y - 0.3) * tile_size}
   local event_id = nil
@@ -442,6 +450,11 @@ function draw_ghost_eaten_scores()
   for k, v in pairs(ghost_eaten_scores) do
     love.graphics.print(v.score, v.x, v.y)
   end
+end
+
+function add_to_score(points)
+  score = score + points
+  if score > hi_score then hi_score = score end
 end
 
 -- Input is similar to {0, 1}, which would be a request to go right.
@@ -738,7 +751,7 @@ end
 -------------------------------------------------------------------------------
 
 function draw_playing()
-  love.graphics.translate(345, 0)
+  love.graphics.translate(345, 15)
 
   -- Draw walls.
   for x = 1, #map do for y = 1, #(map[1]) do
