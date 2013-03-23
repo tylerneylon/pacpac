@@ -363,6 +363,7 @@ function show_victory()
   play_level_won_music()
   characters = {}
   game_over = true
+  save_hi_score()
 end
 
 -- There's a function for this since we might want to play up to 4 overlapping
@@ -397,6 +398,7 @@ function check_for_hit()
           pause_till = math.huge
           game_over = true
           events.add(1, play_game_over_music)
+          save_hi_score()
         end
 
         -- Move the ghosts and the hero back home.
@@ -798,12 +800,33 @@ function joystickpressed_playing(joystick, button)
   dir_request(dirs[button])
 end
 
+function load_hi_score()
+  if not love.filesystem.exists('hi_score') then
+    hi_score = 1000
+    return
+  end
+  local file = love.filesystem.newFile('hi_score')
+  file:open('r')
+  local score_str = file:read()
+  hi_score = tonumber(score_str)
+  file:close()
+end
+
+function save_hi_score()
+  local file = love.filesystem.newFile('hi_score')
+  file:open('w')
+  file:write(tostring(hi_score))
+  file:close()
+end
+
 
 -------------------------------------------------------------------------------
 -- Love functions.
 -------------------------------------------------------------------------------
 
 function love.load()
+  load_hi_score()
+
   small_font = love.graphics.newFont('8bitoperator_jve.ttf', 16)
   large_font = love.graphics.newFont('8bitoperator_jve.ttf', 32)
 
