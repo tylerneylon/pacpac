@@ -62,6 +62,8 @@ lives_left = 3
 life_start_time = 0
 next_music_speedup = -1
 score = 0
+ghost_eaten_scores = {}
+next_ghost_score = 200
 
 jstick = nil
 jstick_img = nil
@@ -141,6 +143,7 @@ function superdot_eaten()
   end
   super_mode_till = clock + 6.0
   score = score + 40  -- An additional +10 is given for every dot.
+  next_ghost_score = 200
 end
 
 -- Sets ghost_mode to either 'scatter' or 'pursue', based on a 26-second cycle,
@@ -376,6 +379,8 @@ function check_for_hit()
         play_nomnom()
         character.dead_till = math.huge
         character.eaten = true
+        add_ghost_eaten_score(next_ghost_score, character.x, character.y)
+        next_ghost_score = next_ghost_score * 2
       else
         death_noise:play()
         lives_left = lives_left - 1
@@ -403,6 +408,7 @@ end
 function draw_message()
   if show_message_till < clock then return end 
   love.graphics.setColor(255, 255, 255)
+  love.graphics.setFont(large_font)
   local t = 14  -- Tweak the positioning.
   love.graphics.printf(message, t, 23.25 * tile_size,
                        21 * tile_size - t, 'center')
@@ -412,6 +418,30 @@ function draw_score()
   love.graphics.setColor(255, 255, 255)
   love.graphics.setFont(large_font)
   love.graphics.printf(score, 0, 23.25 * tile_size, 20 * tile_size, 'right')
+end
+
+function add_ghost_eaten_score(added_score, x, y)
+  score = score + added_score
+  local s = {score = added_score,
+             x = (x - 0.4) * tile_size,
+             y = (y - 0.3) * tile_size}
+  local event_id = nil
+
+  -- Register the score to disappear in 2 seconds.
+  function remove_ghost_eaten_score()
+    ghost_eaten_scores[event_id] = nil
+  end
+  event_id = events.add(2, remove_ghost_eaten_score)
+
+  ghost_eaten_scores[event_id] = s
+end
+
+function draw_ghost_eaten_scores()
+  love.graphics.setFont(small_font)
+  love.graphics.setColor(0, 255, 255)
+  for k, v in pairs(ghost_eaten_scores) do
+    love.graphics.print(v.score, v.x, v.y)
+  end
 end
 
 -- Input is similar to {0, 1}, which would be a request to go right.
@@ -728,6 +758,7 @@ function draw_playing()
   draw_message()
   draw_ready_text()
   draw_score()
+  draw_ghost_eaten_scores()
 end
 
 function update_playing(dt)
