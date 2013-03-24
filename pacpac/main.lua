@@ -578,6 +578,7 @@ function start_new_game()
 
   characters = {}
   local startup_time = 2.55
+  events.add(1, show_character_preview)
   events.add(startup_time, begin_play)
   pause_till = math.huge
   local song = {{'c2', 'c3'}, 'c3', 'c3', 'c3', {'c2', 'e3'}, 0, 'c3',
@@ -587,7 +588,7 @@ function start_new_game()
   notes.play_song(song, 0.15)
 end
 
-function begin_play()
+function setup_characters()
   characters = {}
   man = Character.new('hero', 'yellow')
   table.insert(characters, man)
@@ -598,7 +599,19 @@ function begin_play()
   table.insert(characters, Character.new('ghost', 'pink'))
   table.insert(characters, Character.new('ghost', 'blue'))
   table.insert(characters, Character.new('ghost', 'orange'))
+end
 
+-- This displays stationary characters in position before play starts.
+function show_character_preview()
+  setup_characters()
+  for k, c in pairs(characters) do
+    c.dir = {0, 0}
+    c.always_draw = true
+  end
+end
+
+function begin_play()
+  setup_characters()
   set_weeoo(1)
   pause_till = 0
   show_message_till = 0
