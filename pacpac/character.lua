@@ -241,9 +241,9 @@ function Character:update(dt)
         add_to_score(10)
         play_wata_till = clock + 0.2
         wata:play()
-        if num_dots == 0 then
+        if num_dots <= 0 then
           game_over = true
-          show_victory()
+          level_won()
         end
       end
     end

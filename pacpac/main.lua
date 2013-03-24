@@ -15,6 +15,7 @@ local util = require('util')
 -------------------------------------------------------------------------------
 
 map = nil
+num_levels = 2
 
 -- This can be 'start screen' or 'playing'.
 game_mode = nil
@@ -317,13 +318,23 @@ function play_level_won_music()
   notes.play_song(song, 0.15)
 end
 
-function show_victory()
-  message = 'You Win! w00t'
+function level_won()
+  message = 'Level Complete!'
   show_message_till = math.huge
   set_music('none')
   play_level_won_music()
-  game_ended()
+  if level_num == num_levels then
+    show_victory()
+  else
+    level_num = level_num + 1
+    events.add(3, setup_level)
+  end
   characters = {}
+end
+
+function show_victory()
+  message = 'You Win! w00t'
+  game_ended()
 end
 
 -- There's a function for this since we might want to play up to 4 overlapping
@@ -520,10 +531,12 @@ function set_weeoo(speed)
   weeoo:play()
 end
 
-function start_new_game()
-  lives_left = 3
-  game_over = false
-  score = 0
+-- Loads the level corresponding to level_num.
+function setup_level()
+  local filename = 'level' .. level_num .. '.txt'
+  level = levelreader.read(filename)
+  map = level.map
+
   show_message_till = 0
   num_dots = 0
 
@@ -561,6 +574,15 @@ function start_new_game()
                 0, 'g2', 0, {'c1', 'c4'}}
   say_ready_till = clock + startup_time
   notes.play_song(song, 0.15)
+end
+
+function start_new_game()
+  lives_left = 3
+  game_over = false
+  score = 0
+
+  level_num = 1
+  setup_level()
 end
 
 function setup_characters()
@@ -602,23 +624,6 @@ function draw_ready_text()
   love.graphics.setColor(255, 200, 0)
   love.graphics.printf('Ready!', 7 * tile_size + 4, y * tile_size,
                        7 * tile_size, 'center')
-end
-
-function set_game_mode(new_mode)
-  game_mode = new_mode
-  if game_mode == 'start screen' then
-    setup_start_screen_characters()
-    love.draw = draw_start_screen
-    love.update = update_start_screen
-    love.keypressed = keypressed_start_screen
-    love.joystickpressed = joystickpressed_start_screen
-  elseif game_mode == 'playing' then
-    love.graphics.setFont(small_font)
-    love.draw = draw_playing
-    love.update = update_playing
-    love.keypressed = keypressed_playing
-    love.joystickpressed = joystickpressed_playing
-  end
 end
 
 function character_dance(dir)
@@ -715,6 +720,23 @@ function save_hi_score()
   file:open('w')
   file:write(tostring(hi_score))
   file:close()
+end
+
+function set_game_mode(new_mode)
+  game_mode = new_mode
+  if game_mode == 'start screen' then
+    setup_start_screen_characters()
+    love.draw = draw_start_screen
+    love.update = update_start_screen
+    love.keypressed = keypressed_start_screen
+    love.joystickpressed = joystickpressed_start_screen
+  elseif game_mode == 'playing' then
+    love.graphics.setFont(small_font)
+    love.draw = draw_playing
+    love.update = update_playing
+    love.keypressed = keypressed_playing
+    love.joystickpressed = joystickpressed_playing
+  end
 end
 
 
@@ -818,7 +840,6 @@ end
 
 function love.load()
   level = levelreader.read('level1.txt')
-  map = level.map
   load_hi_score()
 
   small_font = love.graphics.newFont('8bitoperator_jve.ttf', 16)
