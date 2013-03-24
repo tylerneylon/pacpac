@@ -363,9 +363,8 @@ function show_victory()
   show_message_till = math.huge
   set_music('none')
   play_level_won_music()
+  game_ended()
   characters = {}
-  game_over = true
-  save_hi_score()
 end
 
 -- There's a function for this since we might want to play up to 4 overlapping
@@ -400,15 +399,27 @@ function check_for_hit()
 
         if lives_left == 0 then
           message = 'Game Over'
-          game_over = true
           events.add(1, play_game_over_music)
-          save_hi_score()
+          game_ended()
         else
           events.add(death_anim_time, begin_play)
         end
       end
     end
   end
+end
+
+function game_ended()
+  game_over = true
+  save_hi_score()
+
+  function show_start_screen()
+    pause_till = 0
+    events.add(0.5, play_start_screen_music)
+    set_game_mode('start screen')
+  end
+
+  events.add(3, show_start_screen)
 end
 
 function draw_message()
@@ -551,6 +562,11 @@ function set_weeoo(speed)
 end
 
 function start_new_game()
+  lives_left = 3
+  game_over = false
+  score = 0
+  show_message_till = 0
+  num_dots = 0
 
   superdots = hash_from_list({{2.5, 4}, {18.5, 4}, {2.5, 17.5}, {18.5, 17.5}})
 
@@ -723,6 +739,25 @@ function draw_controls()
   end
 end
 
+function load_hi_score()
+  if not love.filesystem.exists('hi_score') then
+    hi_score = 1000
+    return
+  end
+  local file = love.filesystem.newFile('hi_score')
+  file:open('r')
+  local score_str = file:read()
+  hi_score = tonumber(score_str)
+  file:close()
+end
+
+function save_hi_score()
+  local file = love.filesystem.newFile('hi_score')
+  file:open('w')
+  file:write(tostring(hi_score))
+  file:close()
+end
+
 
 -------------------------------------------------------------------------------
 -- Start screen key functions.
@@ -796,7 +831,6 @@ end
 function update_playing(dt)
   clock = clock + dt
 
-  events.update(dt)
   check_jstick_if_present()
   update_ghost_mode()
   update_audio()
@@ -804,6 +838,7 @@ function update_playing(dt)
     character:update(dt)
   end
   check_for_hit()
+  events.update(dt)
 end
 
 function keypressed_playing(key)
@@ -815,25 +850,6 @@ function joystickpressed_playing(joystick, button)
   -- These button numbers work for the PS3 controller.
   local dirs = {[5] = {0, -1}, [6] = {1, 0}, [7] = {0, 1}, [8] = {-1, 0}}
   dir_request(dirs[button])
-end
-
-function load_hi_score()
-  if not love.filesystem.exists('hi_score') then
-    hi_score = 1000
-    return
-  end
-  local file = love.filesystem.newFile('hi_score')
-  file:open('r')
-  local score_str = file:read()
-  hi_score = tonumber(score_str)
-  file:close()
-end
-
-function save_hi_score()
-  local file = love.filesystem.newFile('hi_score')
-  file:open('w')
-  file:write(tostring(hi_score))
-  file:close()
 end
 
 
@@ -869,6 +885,7 @@ function love.load()
   open_noise = PacSource.new('audio/open.ogg')
   open_noise:setVolume(0.5)
   open_noise:play()
+
   events.add(0.5, play_start_screen_music)
 
   jstick = (love.joystick.getNumJoysticks() > 0)

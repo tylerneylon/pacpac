@@ -26,7 +26,9 @@ function M.add(delay, callback, name) end
 function M.cancel(event_id) end
 
 -- This must be called often for everything to work; it's designed to be called
--- from love.update.
+-- from the end of love.update. (From the end because otherwise it's likely to
+-- have unexpected changes due to a callback before your update function is
+-- done executing.)
 function M.update(dt) end
 
 
