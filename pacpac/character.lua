@@ -255,9 +255,45 @@ function Character:update(dt)
   end
 end
 
+function Character:draw_death_anim()
+  local t = death_anim_time - (death_anim_till - clock)
+  local start, stop = 1.0, 2 * math.pi
+  local erase_time = 0.5
+  -- From time_left, map 3 -> start, 1 -> stop.
+  local angle = (t / erase_time) * (stop - start) + start
+  if angle > stop then
+    if (death_anim_time - t) < 1.1 then
+      love.graphics.setLineWidth(1)
+      love.graphics.setColor(255, 255, 255)
+      local n = 7
+      local r1, r2 = 0.15 * tile_size, 0.3 * tile_size
+      for a = 0, 2 * math.pi, 2 * math.pi / n do
+        local c, s = math.cos(a), math.sin(a)
+        local x, y = self.x * tile_size, self.y * tile_size
+        love.graphics.line(c * r1 + x, s * r1 + y,
+                           c * r2 + x, s * r2 + y)
+      end
+    end
+    return
+  end
+  love.graphics.setColor(255, 255, 0)
+  local offset = math.atan2(-1, 0)
+  local r = 0.45
+  love.graphics.arc('fill', self.x * tile_size, self.y * tile_size,
+                    tile_size * r,
+                    offset + angle / 2,
+                    offset + 2 * math.pi - angle / 2, 16)
+end
+
 function Character:draw()
   -- if game_over then return end
-  if not self.always_draw and pause_till > clock then return end
+  if not self.always_draw then
+    if self.shape == 'hero' and death_anim_till > clock then
+      self:draw_death_anim()
+      return
+    end
+    if pause_till > clock then return end
+  end
   local colors = {red = {255, 0, 0}, pink = {255, 128, 128},
                   blue = {0, 224, 255}, orange = {255, 128, 0},
                   yellow = {255, 255, 0}}
@@ -350,7 +386,9 @@ end
 
 function Character:dist_to_pt(pt)
   local dist_v = {self.x - pt[1], self.y - pt[2]}
-  return math.sqrt(dist_v[1] * dist_v[1] + dist_v[2] * dist_v[2])
+  -- return math.sqrt(dist_v[1] * dist_v[1] + dist_v[2] * dist_v[2])
+  -- Using L1 makes it easier to survive close-pursuit turns.
+  return math.abs(dist_v[1]) + math.abs(dist_v[2])
 end
 
 function Character:dist(other)

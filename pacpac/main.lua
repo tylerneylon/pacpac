@@ -51,6 +51,7 @@ show_message_till = -1
 pause_till = -1
 game_over = false
 super_mode_till = -1
+death_anim_till = -1
 
 man = nil  -- A Character object for the hero.
 red = nil
@@ -65,6 +66,7 @@ score = 0
 hi_score = 0
 ghost_eaten_scores = {}
 next_ghost_score = 200
+death_anim_time = 2
 
 jstick = nil
 jstick_img = nil
@@ -387,22 +389,23 @@ function check_for_hit()
         death_noise:play()
         lives_left = lives_left - 1
         message = 'oops'
-        show_message_till = clock + 3.0
-        pause_till = clock + 3.0
+        show_message_till = math.huge
+        pause_till = math.huge
+
+        characters = {man}
+        
+        death_anim_till = clock + death_anim_time
         life_start_time = pause_till
         set_weeoo(1)
 
         if lives_left == 0 then
           message = 'Game Over'
-          show_message_till = math.huge
-          pause_till = math.huge
           game_over = true
           events.add(1, play_game_over_music)
           save_hi_score()
+        else
+          events.add(death_anim_time, begin_play)
         end
-
-        -- Move the ghosts and the hero back home.
-        for k, character in pairs(characters) do character:reset() end
       end
     end
   end
@@ -598,6 +601,7 @@ function begin_play()
 
   set_weeoo(1)
   pause_till = 0
+  show_message_till = 0
 end
 
 function draw_ready_text()
