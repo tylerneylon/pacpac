@@ -6,31 +6,15 @@
 
 local Character = require('Character')
 local events = require('events')
+local levelreader = require('levelreader')
 local notes = require('notes')
+local util = require('util')
 
 -------------------------------------------------------------------------------
 -- Declare all globals here.
 -------------------------------------------------------------------------------
 
-map = {{1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-       {1, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 1, 2, 1, 0, 0, 0, 1, 0, 0, 0, 1},
-       {1, 0, 1, 1, 0, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 0, 0, 0, 1, 0, 1},
-       {1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1},
-       {1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1},
-       {1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1},
-       {1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
-       {1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1},
-       {1, 1, 1, 1, 0, 1, 1, 1, 0, 3, 2, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1},
-       {1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1},
-       {1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
-       {1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1},
-       {1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1},
-       {1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1},
-       {1, 0, 1, 1, 0, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 0, 0, 0, 1, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 1, 2, 1, 0, 0, 0, 1, 0, 0, 0, 1},
-       {1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1}}
+map = nil
 
 -- This can be 'start screen' or 'playing'.
 game_mode = nil
@@ -160,35 +144,10 @@ function update_ghost_mode()
   end
 end
 
-function str(t)
-  if type(t) == 'table' then
-    local s = '{'
-    for i, v in ipairs(t) do
-      if #s > 1 then s = s .. ', ' end
-      s = s .. str(v)
-    end
-    s = s .. '}'
-    return s
-  elseif type(t) == 'number' then
-    return tostring(t)
-  elseif type(t) == 'boolean' then
-    return tostring(t)
-  end
-  return 'unknown type'
-end
-
--- Turns {a, b} into {[str(a)] = a, [str(b)] = b}.
--- This is useful for testing if hash[key] for inclusion.
-function hash_from_list(list)
-  local hash = {}
-  for k, v in pairs(list) do hash[str(v)] = v end
-  return hash
-end
-
 -- The input x, y is the center of the dot in tile-based coordinates.
 function draw_one_dot(x, y, is_superdot)
   local dot_size = 2
-  is_superdot = is_superdot or superdots[str({x, y})]
+  is_superdot = is_superdot or superdots[util.str({x, y})]
   if is_superdot then dot_size = 6 end
   local flash_rate = 0.2  -- In seconds.
   -- Don't draw superdots every other cycle.
@@ -281,7 +240,7 @@ function dots_hit_by_man_at_xy(x, y)
   local dots = {}
   for k, v in pairs(pts) do
     local pt = {v[1] / 2, v[2] / 2}
-    dots[str(pt)] = pt
+    dots[util.str(pt)] = pt
   end
   return dots
 end
@@ -568,7 +527,7 @@ function start_new_game()
   show_message_till = 0
   num_dots = 0
 
-  superdots = hash_from_list({{2.5, 4}, {18.5, 4}, {2.5, 17.5}, {18.5, 17.5}})
+  superdots = util.hash_from_list(level.superdots)
 
   -- This will be a hash set of all dot locations.
   dots = {}
@@ -586,7 +545,7 @@ function start_new_game()
     end
   end
   function add_one_dot(x, y)
-    dots[str({x, y})] = {x, y}
+    dots[util.str({x, y})] = {x, y}
     num_dots = num_dots + 1
   end
 
@@ -774,7 +733,7 @@ function draw_start_screen()
   -- Draw the dot border.
   local tw, th = math.floor(w / tile_size) - 1, math.floor(h / tile_size) - 1
   superdots = {{.5, .5}, {.5, th + .5}, {tw + .5, .5}, {tw + .5, th + .5}}
-  superdots = hash_from_list(superdots)
+  superdots = util.hash_from_list(superdots)
   for x = 0, tw do for y = 0, th, th do draw_one_dot(x + 0.5, y + 0.5) end end
   for x = 0, tw, tw do for y = 0, th do draw_one_dot(x + 0.5, y + 0.5) end end
 
@@ -858,6 +817,8 @@ end
 -------------------------------------------------------------------------------
 
 function love.load()
+  level = levelreader.read('level1.txt')
+  map = level.map
   load_hi_score()
 
   small_font = love.graphics.newFont('8bitoperator_jve.ttf', 16)

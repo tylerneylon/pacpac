@@ -27,31 +27,24 @@ function Character:reset()
   self.dead_till = -1
   self.mode = 'normal'  -- Can be 'freemove' for ghosts through the hotel door.
   self.eaten = false  -- To avoid ghosts being double eaten.
+  local start_pos = level.start_pos[self.color]
+  self.x = start_pos[1]
+  self.y = start_pos[2]
   if self.shape == 'hero' then
-    self.x = 10.5
-    self.y = 17.5
     self.dir = {-1, 0}
     self.next_dir = nil
   else
     -- It's a ghost.
     if self.color == 'red' then
-      self.x = 10.5
-      self.y = 9.5
       self.dir = {1, 0}
       self.exit_time = math.huge
     elseif self.color == 'pink' then
-      self.x = 10.5
-      self.y = 11.5
       self.dir = {0, 0}
       self.exit_time = clock + 6
     elseif self.color == 'blue' then
-      self.x =  9.5
-      self.y = 11.5
       self.dir = {0, 0}
       self.exit_time = clock + 12
     elseif self.color == 'orange' then
-      self.x = 11.5
-      self.y = 11.5
       self.dir = {0, 0}
       self.exit_time = clock + 18
     end
@@ -59,10 +52,11 @@ function Character:reset()
 end
 
 function Character:speed()
+  local hotel_pos = level.ghost_hotel.outside
   if self.shape == 'hero' then return 4 end
   if self:is_dead() then
     -- The dead move fast, except near the hotel so they don't miss the door.
-    if self:dist_to_pt({10.5, 9.5}) < 1 then return 4 end
+    if self:dist_to_pt(hotel_pos) < 1 then return 4 end
     return 8
   end
   if self:is_weak() then
@@ -73,9 +67,10 @@ function Character:speed()
 end
 
 function Character:target()
+  local hotel = level.ghost_hotel
   if self.shape == 'hero' then return {} end
-  if self:is_dead() then return {10.5, 11.5} end
-  if self.mode == 'freemove' then return {10.5, 9.5} end
+  if self:is_dead() then return hotel.inside end
+  if self.mode == 'freemove' then return hotel.outside end
   if self:is_weak() then
     return {math.random() * 19, math.random() * 22}
   end
