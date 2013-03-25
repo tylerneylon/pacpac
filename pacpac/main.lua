@@ -188,6 +188,7 @@ function draw_wall(x, y)
   local map_pt = {x, y}
 
   if m(map_pt) == 3 then
+    -- Draw the ghost hotel door.
     love.graphics.setColor(255, 200, 200)
     local z = w - 0.5
     local h = w * 0.2
@@ -199,7 +200,8 @@ function draw_wall(x, y)
     return
   end
 
-  love.graphics.setColor(0, 0, 255)
+  local wc = level.wall_color
+  love.graphics.setColor(wc.r, wc.g, wc.b)
   for coord = 1, 2 do for delta = -1, 1, 2 do
     local other_pt = {map_pt[1], map_pt[2]}
     other_pt[coord] = other_pt[coord] + delta

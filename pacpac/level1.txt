@@ -5,7 +5,10 @@
 #  Each section starts with a word followed by a : and a newline, and ends
 #  with a blank line.
 #  Extra blank lines are ignored.
-#  Feel free to edit these for fun!
+#  Colors are in the form R G B where each compononent is an integer in the
+#  range 0-255.
+#
+# Feel free to edit these for fun!
 #
 
 map:
@@ -45,3 +48,6 @@ orange = (11, 11)
 ghost_hotel:
 inside = (10, 11)
 outside = (10, 9)
+
+wall_color:
+0 0 255

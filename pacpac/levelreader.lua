@@ -12,7 +12,8 @@
 --   level = { m = << 2d array of sprite layout by (x,y) coords >>,
 --             start_pos = << start positions of characters >>,
 --             superdots = << positions of superdots >>,
---             ghost_hotel = << hotel position info >>
+--             ghost_hotel = << hotel position info >>,
+--             wall_color = {r = red, g = green, b = blue}
 --           }
 --
 
@@ -50,6 +51,9 @@ function M.read(filename)
         for pos, x, y in string.gmatch(line, '(%w+).-(%d+).-(%d+)') do
           level.ghost_hotel[pos] = {x + 0.5, y + 0.5}
         end
+      elseif section == 'wall_color' then
+        local r, g, b = string.match(line, '(%d+)%s+(%d+)%s+(%d+)')
+        level.wall_color = {r = r, g = g, b = b}
       elseif section == nil then
         section = line:sub(1, #line - 1)
       end
