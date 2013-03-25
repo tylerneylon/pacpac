@@ -614,16 +614,43 @@ function begin_play()
   show_message_till = 0
 end
 
+-- This is similar to love.graphics.rectangle, except that the rectangle has
+-- rounded corners. r = radius of the corners, n ~ #points used in the polygon.
+function rounded_rectangle(mode, x, y, w, h, r, n)
+  n = n or 20  -- Number of points in the polygon.
+  if n % 4 > 0 then n = n + 4 - (n % 4) end
+  local pts, c, d, i = {}, {x + w / 2, y + h / 2}, {w / 2 - r, r - h / 2}, 0
+  while i < n do
+    local a = i * 2 * math.pi / n
+    local p = {r * math.cos(a), r * math.sin(a)}
+    for j = 1, 2 do
+      table.insert(pts, c[j] + d[j] + p[j])
+      if p[j] * d[j] < 0 then
+        d[j] = d[j] * -1
+        i = i - 1
+      end
+    end
+    i = i + 1
+  end
+  love.graphics.polygon(mode, pts)
+end
+
 function draw_ready_text()
   if say_ready_till <= clock then return end
+
+  -- Draw the rounded rect background.
+  local x, y, w, h = 206, 361, 176, 75
+  love.graphics.setColor(0, 0, 0, 200)
+  rounded_rectangle('fill', x, y, w, h, 10, 30)
+  love.graphics.setColor(50, 50, 50)
+  rounded_rectangle('line', x, y, w, h, 10, 30)
+
+  -- Draw the text.
   love.graphics.setFont(large_font)
-  love.graphics.setColor(0, 0, 0)
-  local y = 12.9
-  love.graphics.rectangle('fill', 7 * tile_size, y * tile_size,
-                          7 * tile_size, 34)
+  love.graphics.setColor(200, 200, 200)
+  love.graphics.printf('Level ' .. level_num, x + 6, y + 2, w, 'center')
   love.graphics.setColor(255, 200, 0)
-  love.graphics.printf('Ready!', 7 * tile_size + 4, y * tile_size,
-                       7 * tile_size, 'center')
+  love.graphics.printf('Ready!', x + 6, y + 35, w, 'center')
 end
 
 function character_dance(dir)
@@ -810,6 +837,15 @@ function draw_playing()
 end
 
 function update_playing(dt)
+  -- Uncomment this bit to see what kind of dt's we're getting.
+  --[[
+  local s = ''
+  for i = 1, dt * 1000 do s = s .. '-' end
+  print('dt=' .. dt .. s)
+  ]]
+
+  local max_dt = 0.06  -- Useful to avoid bugs that happen for large dt's.
+  dt = math.min(dt, max_dt)
   clock = clock + dt
 
   check_jstick_if_present()
