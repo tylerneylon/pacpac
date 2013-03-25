@@ -618,14 +618,14 @@ end
 -- rounded corners. r = radius of the corners, n ~ #points used in the polygon.
 function rounded_rectangle(mode, x, y, w, h, r, n)
   n = n or 20  -- Number of points in the polygon.
-  if n % 4 > 0 then n = n + 4 - (n % 4) end
+  if n % 4 > 0 then n = n + 4 - (n % 4) end  -- Include multiples of 90 degrees.
   local pts, c, d, i = {}, {x + w / 2, y + h / 2}, {w / 2 - r, r - h / 2}, 0
   while i < n do
     local a = i * 2 * math.pi / n
     local p = {r * math.cos(a), r * math.sin(a)}
     for j = 1, 2 do
       table.insert(pts, c[j] + d[j] + p[j])
-      if p[j] * d[j] < 0 then
+      if p[j] * d[j] <= 0 and (p[1] * d[2] < p[2] * d[1]) then
         d[j] = d[j] * -1
         i = i - 1
       end
