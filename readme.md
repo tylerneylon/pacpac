@@ -1,18 +1,112 @@
 # PacPac
 
-This is a pac-man clone.
-There are many like it.
-This one is mine.
+This is pac-man from a parallel universe.
 
-![PacPac Screenshot](https://raw.github.com/tylerneylon/pacpac/master/screenshot.png)
+![PacPac Title](https://raw.github.com/tylerneylon/pacpac/master/screenshots/title.png)
 
-The current code was written in less than 24 hours
-to prove to my wife that I could make something like pac-man in less than a day.
-(She was quite skeptical.)
+![PacPac Level Samples](https://raw.github.com/tylerneylon/pacpac/master/screenshots/level1_2.png)
 
-Here's a fun [evolution of the game in screenshots](http://tylerneylon.com/pacpac/).
+Right now there are 2 mazes to play through. This is twice as
+many as the original pac-man :)
 
-You need [love](http://love2d.org) to play.
+You need the [love](http://love2d.org) game engine to play.
+
+The original code was written in under 24 hours as a challenge.
+My wife didn't believe I could make a pac-man-like game in a day.
+Here's a fun [first 24-hour evolution of the game in screenshots](http://tylerneylon.com/pacpac/).
+
+## Level Editing
+
+I've set up the game so that you can make your own levels without having to know how to program.
+Just edit either `level1.txt` or `level2.txt` to change that level. The file format is
+explained within those files, and this format is designed to be human-friendly and flexible.
+
+## Contributions
+
+It would be awesome if other coders contributed more levels. I'd like each level to add something
+new to the game. For now, level 2 simply adds a new layout and color, which in most games would
+not count as "new" but since Pac-Man has such a strong 1-layout tradition, I'm counting it as new.
+
+My code philisophy for PacPac is to keep the code a little dirty, as in using global variables
+freely. Seriously. It's not that dirty is good, but rather that getting things done is good.
+So I'm asking for contributions that fix bugs or improve gameplay, but are not focused on
+refactoring. Refactoring is fine as a by-product of other changes, though.
+
+If you'd like to add a level, please read the next section to understand what kind of
+level designs would fit in with the game. Thanks!
+
+## Things That Could be Added
+
+### Levels
+
+Below are a few ideas for later levels.
+It would be cool to arrange them in the game from easiest to hardest.
+
+* A level where the walls are not drawn, but must be implied through the dot positions and
+  where the ghosts travel. I played this by accident a couple times, and it's challenging
+  and fun.
+* New ghost AI's in different colors.
+* A gun that can shoot ghosts.
+* A level with keys that can open doors. Doors are basically walls that you can erase
+  with a key.
+* A level with portal-like mechanics. Maybe a warp door that changes connected doors,
+  or a warp gun. (This sounds a little scary to have to debug.)
+* A level where the hero and ghosts switch roles. By default, the ghosts are weak - i.e., flashing
+  white/blue and can be eaten. The ghosts eat dots, and if they eat a superdot, then the hero
+  becomes vulnerable - i.e., the ghosts appear non-flashing temporarily. However, the ghosts no
+  longer reincarnate, and it is the hero's goal to eat all of them.
+
+Once we have 10 good and mostly bug-free levels, I'll consider the game to be v1-ready.
+
+### Other features
+
+Summary:
+
+* Tasty foods for bonus points
+* One or maybe two extra lives for certain score points
+* Replay a previously-played game
+* Analytics
+* Server-based high-score-of-the-day
+
+#### Tasty foods
+
+In the original game, you can eat fruit like apples and oranges.
+It would be cool to add more fun foods like pizza, burgers, fries,
+and waffles. Maybe cinnamon rolls. Foods that are tasty and would
+make for fun pixel art.
+
+#### Extra lives
+
+In the original game, you also get an extra life once you reach a
+certain score. This is a nice feature that we could include
+in PacPac.
+
+#### Game reply
+
+Automatically save all the effective commands the user provides so that
+we can exactly replay that game as a watch-only experience. Maybe this
+could happen automatically for the highest-scoring game, which would
+be displayed from the title screen if the user is idle.
+
+There are a couple points to be careful about. The game currently uses
+a random number generator, so we'd have to save the seed used. It also
+depends on the dt values sent in to update, so we'd have to be careful
+about how the replay worked with the dt values. That might be tricky.
+Finally, there is technically analog input available through gamepads,
+but this can be discretized so that we only need to remember the
+successful calls to `dir_request`.
+
+#### Analytics
+
+By this, I mean heat maps of death locations on each level, and average
+time-of-life per level. This could help us figure out which levels are
+most challenging. From there we could do things like modify too-hard or
+too-easy sections, and make sure the levels are in the right order.
+
+#### Server-based scores
+
+This is self-explanatory. Even better is being able to download and watch
+a replay of good high scores.
 
 ## Credits
 
