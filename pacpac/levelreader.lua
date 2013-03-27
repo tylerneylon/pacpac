@@ -40,7 +40,7 @@ function M.read(filename)
           table.insert(level.map[i], tonumber(line:sub(i, i)))
         end
       elseif section == 'superdots' then
-        for x, y in string.gmatch(line, '([%d\.]+),%s*([%d\.]+)') do
+        for x, y in string.gmatch(line, '([%d%.]+),%s*([%d%.]+)') do
           table.insert(level.superdots, {x, y})
         end
       elseif section == 'start_pos' then
