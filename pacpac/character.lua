@@ -242,7 +242,7 @@ function Character:update(dt)
         play_wata_till = clock + 0.2
         wata:play()
         if num_dots <= 0 then
-          game_over = true
+          pause_till = math.huge
           level_won()
         end
       end
