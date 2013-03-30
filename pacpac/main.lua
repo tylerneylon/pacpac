@@ -202,7 +202,7 @@ function draw_wall(x, y)
 
   if m(map_pt) == 3 then
     -- Draw the ghost hotel door.
-    draw.setColor(255, 200, 200)
+    draw.setColor(255, 200, 200, 255, {is_wall = true})
     local z = w - 0.5
     local h = w * 0.2
     love.graphics.rectangle('fill',
