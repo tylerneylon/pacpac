@@ -6,11 +6,14 @@
 --     local Character = require('Character')
 --
 
+local draw = require('draw')
+
 local Character = {} ; Character.__index = Character
 
 -- shape is 'hero' or 'ghost'; color is in {'red', 'pink', 'blue', 'orange'}.
 function Character.new(shape, color)
   local c = setmetatable({shape = shape, color = color}, Character)
+  c.is_fake = false
   c:reset()
   return c
 end
@@ -150,6 +153,10 @@ function Character:did_stop(old_dir)
       return
     end
   end
+
+  -- We are at a dead end, so we must u-turn.
+  self.dir = {-old_dir[1], -old_dir[2]}
+  self.last_turn = {self.x, self.y}
 end
 
 function Character:available_turns()
@@ -259,7 +266,7 @@ function Character:draw_death_anim()
   if angle > stop then
     if (death_anim_time - t) < 1.1 then
       love.graphics.setLineWidth(1)
-      love.graphics.setColor(255, 255, 255)
+      draw.setColor(255, 255, 255)
       local n = 7
       local r1, r2 = 0.15 * tile_size, 0.3 * tile_size
       for a = 0, 2 * math.pi, 2 * math.pi / n do
@@ -271,7 +278,7 @@ function Character:draw_death_anim()
     end
     return
   end
-  love.graphics.setColor(255, 255, 0)
+  draw.setColor(255, 255, 0)
   local offset = math.atan2(-1, 0)
   local r = 0.45
   love.graphics.arc('fill', self.x * tile_size, self.y * tile_size,
@@ -281,7 +288,7 @@ function Character:draw_death_anim()
 end
 
 function Character:draw()
-  -- if game_over then return end
+  local draw_opts = {is_live = not self.is_fake}
   if not self.always_draw then
     if self.shape == 'hero' and death_anim_till > clock then
       self:draw_death_anim()
@@ -293,7 +300,7 @@ function Character:draw()
                   blue = {0, 224, 255}, orange = {255, 128, 0},
                   yellow = {255, 255, 0}}
   local color = colors[self.color]
-  love.graphics.setColor(color[1], color[2], color[3])
+  draw.setColor(color[1], color[2], color[3], 255, draw_opts)
   if self.shape == 'hero' then
     local p = 0.15  -- Period, in seconds, of chomps.
     local max = 1.0  -- Max mouth angle, in radians.
@@ -316,12 +323,12 @@ function Character:draw()
   else  -- It's a ghost.
     local is_inverted_weak = false
     if self:is_weak() then
-      love.graphics.setColor(0, 0, 255)
+      draw.setColor(0, 0, 255, 255, draw_opts)
       local time_left = super_mode_till - clock
       is_inverted_weak = time_left < 2 and
           (math.floor(time_left * 3) % 2 == 0)
       if is_inverted_weak then
-        love.graphics.setColor(255, 255, 255)
+        draw.setColor(255, 255, 255, 255, draw_opts)
       end
     end
     if not self:is_dead() then
@@ -345,8 +352,8 @@ function Character:draw()
       love.graphics.polygon('fill', vertices)
     end
     -- Draw the eyes.
-    love.graphics.setColor(255, 255, 255)
-    if is_inverted_weak then love.graphics.setColor(0, 0, 255) end
+    draw.setColor(255, 255, 255, 255, draw_opts)
+    if is_inverted_weak then draw.setColor(0, 0, 255, 255, draw_opts) end
     for i = -1, 1, 2 do
       local dx = i * 5
       local radius = 4
@@ -356,7 +363,7 @@ function Character:draw()
     end
     if self:is_dead() or not self:is_weak() then
       -- Draw the pupils.
-      love.graphics.setColor(0, 0, 192)
+      draw.setColor(0, 0, 192, 255, draw_opts)
       for i = -1, 1, 2 do
         local dx = i * 5
         love.graphics.circle('fill', self.x * tile_size + dx + 1.5 * self.dir[1],

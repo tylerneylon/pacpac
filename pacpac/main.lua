@@ -5,6 +5,7 @@
   ]]
 
 local Character = require('Character')
+local draw = require('draw')
 local events = require('events')
 local levelreader = require('levelreader')
 local notes = require('notes')
@@ -15,7 +16,7 @@ local util = require('util')
 -------------------------------------------------------------------------------
 
 map = nil
-num_levels = 2
+num_levels = 3
 
 -- This can be 'start screen' or 'playing'.
 game_mode = nil
@@ -44,7 +45,7 @@ characters = {}  -- All moving Character objects = man + ghosts.
 
 ghost_mode = 'scatter'
 
-lives_left = 3
+lives_left = 0
 life_start_time = 0
 next_music_speedup = -1
 score = 0
@@ -75,6 +76,8 @@ nomnomz = {}
 nomnomz_index = 1
 runny = nil
 open_noise = nil
+thunder = {}
+thunder_index = 1
 
 start_song_id = nil
 
@@ -119,6 +122,7 @@ function PacSource:setLooping(should_loop) self.src:setLooping(should_loop) end
 function PacSource:isPaused() return self.src:isPaused() end
 function PacSource:setVolume(volume) self.src:setVolume(volume) end
 function PacSource:stop() self.src:stop() end
+function PacSource:rewind() self.src:rewind() end
 
 
 -------------------------------------------------------------------------------
@@ -156,7 +160,7 @@ function draw_one_dot(x, y, is_superdot)
      pause_till <= clock then
     return
   end
-  love.graphics.setColor(255, 220, 128)
+  draw.setColor(255, 220, 128)
   love.graphics.circle('fill',
                        x * tile_size,
                        y * tile_size,
@@ -189,7 +193,7 @@ function draw_wall(x, y)
 
   if m(map_pt) == 3 then
     -- Draw the ghost hotel door.
-    love.graphics.setColor(255, 200, 200)
+    draw.setColor(255, 200, 200)
     local z = w - 0.5
     local h = w * 0.2
     love.graphics.rectangle('fill',
@@ -201,7 +205,7 @@ function draw_wall(x, y)
   end
 
   local wc = level.wall_color
-  love.graphics.setColor(wc.r, wc.g, wc.b)
+  draw.setColor(wc.r, wc.g, wc.b, 255, {is_wall = true})
   for coord = 1, 2 do for delta = -1, 1, 2 do
     local other_pt = {map_pt[1], map_pt[2]}
     other_pt[coord] = other_pt[coord] + delta
@@ -226,6 +230,18 @@ function draw_wall(x, y)
            c[1] + d[2][1], c[2] + d[2][2])
     end
   end end  -- Loop over coord, delta.
+end
+
+function lightning_strike()
+  play_thunder()
+  last_lightning = clock
+end
+
+function lightning_sequence()
+  lightning_strike()
+  events.add(0.2, lightning_strike)
+  events.add(1.5, lightning_strike)
+  events.add(math.random() * 10 + 6, lightning_sequence)
 end
 
 function pts_hit_by_man_at_xy(x, y)
@@ -264,6 +280,7 @@ function draw_lives_left()
   local char = Character.new('hero', 'yellow')
   char.y = 24
   char.always_draw = true
+  char.is_fake = true
   for i = 1, lives_left - 1 do
     char.x = 0.5 + 1.2 * i
     char:draw()
@@ -328,8 +345,7 @@ function level_won()
   if level_num == num_levels then
     show_victory()
   else
-    level_num = level_num + 1
-    events.add(3, setup_level)
+    events.add(3, next_level)
   end
   characters = {}
 end
@@ -345,6 +361,12 @@ function play_nomnom()
   local n = nomnomz[nomnomz_index]
   n:play()
   nomnomz_index  = (nomnomz_index % 4) + 1
+end
+
+function play_thunder()
+  local t = thunder[thunder_index]
+  t:play()
+  thunder_index  = (thunder_index % 9) + 1
 end
 
 function check_for_hit()
@@ -396,7 +418,7 @@ end
 
 function draw_message()
   if show_message_till < clock then return end 
-  love.graphics.setColor(255, 255, 255)
+  draw.setColor(255, 255, 255)
   love.graphics.setFont(large_font)
   local t = 14  -- Tweak the positioning.
   love.graphics.printf(message, t, 23.25 * tile_size,
@@ -404,12 +426,12 @@ function draw_message()
 end
 
 function draw_score()
-  love.graphics.setColor(255, 255, 255)
+  draw.setColor(255, 255, 255)
   love.graphics.setFont(large_font)
   love.graphics.printf(score, 0, 23.25 * tile_size, 20 * tile_size, 'right')
 
   if hi_score == score then
-    love.graphics.setColor(255, 255, 0)
+    draw.setColor(255, 255, 0)
   end
   local x, y = 9, -5
   love.graphics.print('High Score', tile_size + x, y)
@@ -434,7 +456,7 @@ end
 
 function draw_ghost_eaten_scores()
   love.graphics.setFont(small_font)
-  love.graphics.setColor(0, 255, 255)
+  draw.setColor(0, 255, 255)
   for k, v in pairs(ghost_eaten_scores) do
     love.graphics.print(v.score, v.x, v.y)
   end
@@ -533,6 +555,11 @@ function set_weeoo(speed)
   weeoo:play()
 end
 
+function next_level()
+  level_num = level_num + 1
+  setup_level()
+end
+
 -- Loads the level corresponding to level_num.
 function setup_level()
   local filename = 'level' .. level_num .. '.txt'
@@ -576,6 +603,10 @@ function setup_level()
                 0, 'g2', 0, {'c1', 'c4'}}
   say_ready_till = clock + startup_time
   notes.play_song(song, 0.15)
+
+  if level_num == 3 then
+    events.add(5, lightning_sequence)
+  end
 end
 
 function start_new_game()
@@ -642,16 +673,16 @@ function draw_ready_text()
 
   -- Draw the rounded rect background.
   local x, y, w, h = 206, 361, 176, 75
-  love.graphics.setColor(0, 0, 0, 200)
+  draw.setColor(0, 0, 0, 200)
   rounded_rectangle('fill', x, y, w, h, 10, 30)
-  love.graphics.setColor(50, 50, 50)
+  draw.setColor(50, 50, 50)
   rounded_rectangle('line', x, y, w, h, 10, 30)
 
   -- Draw the text.
   love.graphics.setFont(large_font)
-  love.graphics.setColor(200, 200, 200)
+  draw.setColor(200, 200, 200)
   love.graphics.printf('Level ' .. level_num, x + 6, y + 2, w, 'center')
-  love.graphics.setColor(255, 200, 0)
+  draw.setColor(255, 200, 0)
   love.graphics.printf('Ready!', x + 6, y + 35, w, 'center')
 end
 
@@ -696,13 +727,13 @@ function draw_start_text()
   local w = love.graphics.getWidth()
   local dy = -50
   love.graphics.setFont(large_font)
-  love.graphics.setColor(255, 255, 255)
+  draw.setColor(255, 255, 255)
   love.graphics.printf('Start', 0, 400 + dy, w, 'center')
 
   if math.floor(clock / 0.3) % 2 == 0 then
-    love.graphics.setColor(100, 100, 100)
+    draw.setColor(100, 100, 100)
   else
-    love.graphics.setColor(0, 0, 0)
+    draw.setColor(0, 0, 0)
   end
   local vertices = {568, 409 + dy, 583, 417 + dy, 568, 425 + dy}
   love.graphics.polygon('fill', vertices)
@@ -711,23 +742,23 @@ end
 function draw_controls()
   local w = love.graphics.getWidth()
   local x, y = 528, 500
-  love.graphics.setColor(255, 255, 255)
+  draw.setColor(255, 255, 255)
   if jstick then
     love.graphics.draw(jstick_img, x, y)
     local alpha = 255 * (math.sin(clock * 5) + 1) / 2
-    love.graphics.setColor(alpha, alpha, alpha)
+    draw.setColor(alpha, alpha, alpha)
     love.graphics.draw(jstick_overlay, x, y)
   else
     love.graphics.draw(keybd_img, (w - 200) / 2, y)
   end
 
   love.graphics.setFont(small_font)
-  love.graphics.setColor(255, 255, 255)
+  draw.setColor(255, 255, 255)
   if jstick then
     love.graphics.print('Controls', 578, 631)
   else
     love.graphics.printf('Controls', 0, 631, w, 'center')
-    love.graphics.setColor(80, 80, 80)
+    draw.setColor(80, 80, 80)
     love.graphics.printf('no gamepad detected', 0, 651, w, 'center')
   end
 end
@@ -778,7 +809,7 @@ function draw_start_screen()
   -- Draw the logo.
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
   local logo_w = logo:getWidth()
-  love.graphics.setColor(255, 255, 255)
+  draw.setColor(255, 255, 255)
   love.graphics.draw(logo, math.floor((w - logo_w) / 2), 100)
 
   -- Draw the dot border.
@@ -888,6 +919,10 @@ function love.load()
   jstick_overlay = love.graphics.newImage('img/gamepad_overlay.png')
   keybd_img = love.graphics.newImage('img/arrow_keys.png')
 
+  open_noise = PacSource.new('audio/open.ogg')
+  open_noise:setVolume(0.5)
+  open_noise:play()
+
   wata = PacSource.new('audio/watawata.ogg')
   wata:setLooping(true)
   bwop = PacSource.new('audio/bwop.ogg')
@@ -902,9 +937,10 @@ function love.load()
   runny = PacSource.new('audio/runny.ogg')
   runny:setLooping(true)
   runny:setVolume(0.08)
-  open_noise = PacSource.new('audio/open.ogg')
-  open_noise:setVolume(0.5)
-  open_noise:play()
+  for i = 1, 9 do
+    local t = PacSource.new('audio/thunder.ogg')
+    table.insert(thunder, t)
+  end
 
   events.add(0.5, play_start_screen_music)
 
