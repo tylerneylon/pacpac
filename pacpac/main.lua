@@ -81,6 +81,15 @@ thunder_index = 1
 
 start_song_id = nil
 
+start_lives = 3
+dots_at_end = 0
+easy_mode = false
+
+if easy_mode then
+  start_lives = 10
+  dots_at_end = 250
+end
+
 -------------------------------------------------------------------------------
 -- Define the PacSource class.
 -- This is a weird class because we have to wrap instead of subclass, as the
@@ -610,7 +619,7 @@ function setup_level()
 end
 
 function start_new_game()
-  lives_left = 3
+  lives_left = start_lives
   game_over = false
   score = 0
 
