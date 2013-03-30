@@ -94,6 +94,7 @@ function M.cancel(event_id)
     event_id = event_ids_by_name[event_id]
   end
   local e = events_by_id[event_id]
+  if e == nil then return end
   if e.name and event_ids_by_name[e.name] == event_id then
     event_ids_by_name[e.name] = nil
   end
