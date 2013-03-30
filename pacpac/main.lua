@@ -250,7 +250,11 @@ function lightning_sequence()
   lightning_strike()
   events.add(0.2, lightning_strike)
   events.add(1.5, lightning_strike)
-  events.add(math.random() * 10 + 6, lightning_sequence)
+  events.add(math.random() * 10 + 6, lightning_sequence, 'lightning')
+end
+
+function stop_lightning()
+  events.cancel('lightning')
 end
 
 function pts_hit_by_man_at_xy(x, y)
@@ -415,6 +419,7 @@ end
 function game_ended()
   game_over = true
   save_hi_score()
+  stop_lightning()
 
   function show_start_screen()
     pause_till = 0

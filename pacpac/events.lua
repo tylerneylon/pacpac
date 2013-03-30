@@ -19,10 +19,13 @@ local M = {}
 -------------------------------------------------------------------------------
 
 -- Register a callback to be called after a delay.
--- The name is optional, and allows for easier cancellation.
--- Returns an event_id, which is the name if provided.
+-- The name is an optional string, and allows for easier cancellation.
+-- Returns a unique event_id.
 function M.add(delay, callback, name) end
 
+-- The event_id can either be the value returned from add or the name given to
+-- add. If it is a non-unique name, then only the last-added event with that
+-- name will be cancelled.
 function M.cancel(event_id) end
 
 -- This must be called often for everything to work; it's designed to be called
@@ -50,6 +53,7 @@ local clock = 0
 local next_number_id = 1
 local event_ids_by_time = {}  -- An array with values = an event_id.
 local events_by_id = {}  -- A dict with key = event_id, value = event table.
+local event_ids_by_name = {}
 
 local function insert(event_id)
   local event = events_by_id[event_id]
@@ -76,18 +80,23 @@ end
 -------------------------------------------------------------------------------
 
 function M.add(delay, callback, name)
-  local event_id = name
-  if not event_id then
-    event_id = next_number_id
-    next_number_id = next_number_id + 1
-  end
-  local event = {time = clock + delay, callback = callback}
+  event_id = next_number_id
+  next_number_id = next_number_id + 1
+  if name then event_ids_by_name[name] = event_id end
+  local event = {time = clock + delay, callback = callback, name = name}
   events_by_id[event_id] = event
   insert(event_id)  -- Inserts into event_ids_by_time.
   return event_id
 end
 
 function M.cancel(event_id)
+  if type(event_id) == 'string' then
+    event_id = event_ids_by_name[event_id]
+  end
+  local e = events_by_id[event_id]
+  if e.name and event_ids_by_name[e.name] == event_id then
+    event_ids_by_name[e.name] = nil
+  end
   remove(event_id)  -- Removes from event_ids_by_time.
   events_by_id[event_id] = nil
 end
