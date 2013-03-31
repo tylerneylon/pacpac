@@ -6,10 +6,10 @@ This is pac-man from a parallel universe.
 
 ![PacPac Level Samples](https://raw.github.com/tylerneylon/pacpac/master/screenshots/level1_2.png)
 
-Right now there are 2 mazes to play through. This is twice as
+Right now there are 3 mazes to play through. This is thrice as
 many as the original pac-man :)
 
-You need the [love](http://love2d.org) game engine to play.
+You need the [löve](http://love2d.org) game engine to play.
 
 The original code was written in under 24 hours as a challenge.
 My wife didn't believe I could make a pac-man-like game in a day.
@@ -18,13 +18,13 @@ Here's a fun [first 24-hour evolution of the game in screenshots](http://tylerne
 ## Level Editing
 
 I've set up the game so that you can make your own levels without having to know how to program.
-Just edit either `level1.txt` or `level2.txt` to change that level. The file format is
+Just edit `level1.txt` or any other `levelN.txt` file to change that level. The file format is
 explained within those files, and this format is designed to be human-friendly and flexible.
 
 ## Contributions
 
 It would be awesome if other coders contributed more levels. I'd like each level to add something
-new to the game. For now, level 2 simply adds a new layout and color, which in most games would
+new to the game. For now, level 2 adds a new layout and color, which in most games would
 not count as "new" but since Pac-Man has such a strong 1-layout tradition, I'm counting it as new.
 
 My code philisophy for PacPac is to keep the code a little dirty, as in using global variables
@@ -42,9 +42,6 @@ level designs would fit in with the game. Thanks!
 Below are a few ideas for later levels.
 It would be cool to arrange them in the game from easiest to hardest.
 
-* A level where the walls are not drawn, but must be implied through the dot positions and
-  where the ghosts travel. I played this by accident a couple times, and it's challenging
-  and fun.
 * New ghost AI's in different colors.
 * A gun that can shoot ghosts.
 * A level with keys that can open doors. Doors are basically walls that you can erase

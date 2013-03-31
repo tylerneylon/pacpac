@@ -84,11 +84,18 @@ start_song_id = nil
 start_lives = 3
 dots_at_end = 0
 easy_mode = false
+is_invincible = false
 
 if easy_mode then
   start_lives = 10
   dots_at_end = 250
 end
+
+-- Potential debug settings.
+--[[
+dots_at_end = -1
+is_invincible = true
+]]
 
 -------------------------------------------------------------------------------
 -- Define the PacSource class.
@@ -391,7 +398,7 @@ function check_for_hit()
         character.eaten = true
         add_ghost_eaten_score(next_ghost_score, character.x, character.y)
         next_ghost_score = next_ghost_score * 2
-      else
+      elseif not is_invincible then
         death_noise:play()
         lives_left = lives_left - 1
         message = 'oops'
