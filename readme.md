@@ -27,7 +27,7 @@ It would be awesome if other coders contributed more levels. I'd like each level
 new to the game. For now, level 2 adds a new layout and color, which in most games would
 not count as "new" but since Pac-Man has such a strong 1-layout tradition, I'm counting it as new.
 
-My code philisophy for PacPac is to keep the code a little dirty, as in using global variables
+My code philosophy for PacPac is to keep the code a little dirty, as in using global variables
 freely. Seriously. It's not that dirty is good, but rather that getting things done is good.
 So I'm asking for contributions that fix bugs or improve gameplay, but are not focused on
 refactoring. Refactoring is fine as a by-product of other changes, though.
