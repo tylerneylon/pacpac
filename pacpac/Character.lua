@@ -131,42 +131,17 @@ function Character:dot_prod(dir)
   return target_dir[1] * dir[1] + target_dir[2] * dir[2]
 end
 
-function Character:just_turned()
-  return self.last_turn and self:dist_to_pt(self.last_turn) < 0.8
-end
-
--- Input is the direction we were previously going in.
--- We want ghosts to not go directly backwards here.
-function Character:did_stop(old_dir)
-  if self.shape == 'hero' then return end
-  local turn = {old_dir[2], old_dir[1]}
-  local sorted_turns = {}  -- First dir here will be our first choice.
-  local dot_prod = self:dot_prod(turn)
-  local sign = 1
-  if dot_prod < 0 then sign = -1 end
-  local turns = {{turn[1] * sign, turn[2] * sign},
-                 {turn[1] * sign * -1, turn[2] * sign * -1}}
-  for k, t in pairs(turns) do
-    if self:can_go_in_dir(t) then
-      self.dir = t
-      self.last_turn = {self.x, self.y}
-      return
-    end
-  end
-
-  -- We are at a dead end, so we must u-turn.
-  self.dir = {-old_dir[1], -old_dir[2]}
-  self.last_turn = {self.x, self.y}
-end
-
-function Character:available_turns()
-  if self:just_turned() then return {} end
+-- Returns available directions, skipping u-turns unless it's the only choice.
+-- This is for use by ghosts.
+function Character:available_dirs()
   local turn = {self.dir[2], self.dir[1]}
   local turns = {}
+  if self:can_go_in_dir(self.dir) then turns = {self.dir} end
   for sign = -1, 1, 2 do
     local t = {turn[1] * sign, turn[2] * sign}
     if self:can_go_in_dir(t) then table.insert(turns, t) end
   end
+  if #turns == 0 then table.insert(turns, {-self.dir[1], -self.dir[2]}) end
   return turns
 end
 
@@ -176,6 +151,21 @@ function Character:turn_if_better(turn)
     self.dir = turn
     self.last_turn = {self.x, self.y}
   end
+end
+
+function Character:next_grid_point()
+  local pt = {self.x, self.y}
+  for i = 1, 2 do
+    -- This if block is more readable than a short but opaque mathy summary.
+    if self.dir[i] == 1 then
+      pt[i] = math.floor(pt[i] + 0.5) + 0.5
+    elseif self.dir[i] == -1 then
+      pt[i] = math.ceil(pt[i] - 0.5) - 0.5
+    elseif self.dir[i] ~= 0 then
+      print('Error: Unexpected dir value (' .. self.dir[i] .. ') found.')
+    end
+  end
+  return pt
 end
 
 function Character:update(dt)
@@ -188,37 +178,47 @@ function Character:update(dt)
     self.dir = {0, -1}
   end
 
-  -- Blind movement.
-  self.x = self.x + self.dir[1] * dt * self:speed()
-  self.y = self.y + self.dir[2] * dt * self:speed()
-  self:snap_into_place()
 
-  -- Step back if we hit a wall.
-  local can_pass_hotel_door = (self.mode == 'freemove' or self:is_dead())
-  local did_hit_wall = xy_hits_a_wall(self.x, self.y, can_pass_hotel_door)
-  if did_hit_wall then
-    local old_dir = self.dir
-    self.dir = {0, 0}
-    self:snap_into_place()
-    self:did_stop(old_dir)
-  end
+  local movement = dt * self:speed()
+  while movement > 0 do
+    -- This is inside the loop because the hero can hit a wall and stop.
+    if self.dir[1] == 0 and self.dir[2] == 0 then return end
 
-  -- Check if we should turn.
-  -- This outer guard protects against turns in the side warps.
-  if self.x > 1 and self.x < (#map + 1) then
-    if self.shape == 'hero' and self:can_go_in_dir(self.next_dir) then
-      self.dir = self.next_dir
-      self.next_dir = nil
+    local pt = self:next_grid_point()
+    local dist = self:dist_to_pt(pt)
+    if dist <= movement then
+      self.x, self.y = pt[1], pt[2]
+      self:reached_grid_point()
+    else
+      self.x = self.x + self.dir[1] * movement
+      self.y = self.y + self.dir[2] * movement
     end
-    if self.shape == 'ghost' and not did_hit_wall then
-      local turns = self:available_turns()
-      for k, t in pairs(turns) do self:turn_if_better(t) end
-    end
+    movement = movement - dist  -- May end up below 0; that's ok.
   end
 
   self:check_for_side_warps()
   self:check_if_done_exiting_hotel()
   self:register_dots_eaten()
+end
+
+function Character:reached_grid_point()
+  if self.x < 1 or self.x > (#map + 1) then return end
+
+  if self.shape == 'hero' then
+    if self:can_go_in_dir(self.next_dir) then
+      self.dir = self.next_dir
+      self.next_dir = nil
+    elseif not self:can_go_in_dir(self.dir) then
+      self.dir = {0, 0}
+    end
+  end
+
+  if self.shape == 'ghost' then
+    local dirs = self:available_dirs()
+    self.dir = dirs[1]
+    for k, t in pairs(dirs) do self:turn_if_better(t) end
+  end
+
 end
 
 -- If a character is far to the left right, they jump across the map.
@@ -397,7 +397,6 @@ end
 
 function Character:dist_to_pt(pt)
   local dist_v = {self.x - pt[1], self.y - pt[2]}
-  -- return math.sqrt(dist_v[1] * dist_v[1] + dist_v[2] * dist_v[2])
   -- Using L1 makes it easier to survive close-pursuit turns.
   return math.abs(dist_v[1]) + math.abs(dist_v[2])
 end
