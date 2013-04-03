@@ -216,7 +216,13 @@ function Character:update(dt)
     end
   end
 
-  -- Check for side warps.
+  self:check_for_side_warps()
+  self:check_if_done_exiting_hotel()
+  self:register_dots_eaten()
+end
+
+-- If a character is far to the left right, they jump across the map.
+function Character:check_for_side_warps()
   if self.x <= 0.5 then
     self.x = #map + 1.5
     self.dir = {-1, 0}
@@ -224,8 +230,11 @@ function Character:update(dt)
     self.x = 0.5
     self.dir = {1, 0}
   end
+end
 
-  -- Check if we are a ghost finishing a hotel exit.
+function Character:check_if_done_exiting_hotel()
+  if self.shape ~= 'ghost' then return end
+  local can_pass_hotel_door = (self.mode == 'freemove' or self:is_dead())
   if can_pass_hotel_door and self:dist_to_pt(self:target()) < 0.1 then
     if self:is_dead() then
       self.dir = {0, -1}
@@ -236,22 +245,22 @@ function Character:update(dt)
       self.mode = 'normal'
     end
   end
+end
 
-  -- Register dots eaten.
-  if self.shape == 'hero' then
-    local dots_hit = dots_hit_by_man_at_xy(self.x, self.y)
-    for k, v in pairs(dots_hit) do
-      if dots[k] then
-        if superdots[k] then superdot_eaten() end
-        dots[k] = nil
-        num_dots = num_dots - 1
-        add_to_score(10)
-        play_wata_till = clock + 0.2
-        wata:play()
-        if num_dots <= dots_at_end then
-          pause_till = math.huge
-          level_won()
-        end
+function Character:register_dots_eaten()
+  if self.shape ~= 'hero' then return end
+  local dots_hit = dots_hit_by_man_at_xy(self.x, self.y)
+  for k, v in pairs(dots_hit) do
+    if dots[k] then
+      if superdots[k] then superdot_eaten() end
+      dots[k] = nil
+      num_dots = num_dots - 1
+      add_to_score(10)
+      play_wata_till = clock + 0.2
+      wata:play()
+      if num_dots <= dots_at_end then
+        pause_till = math.huge
+        level_won()
       end
     end
   end
