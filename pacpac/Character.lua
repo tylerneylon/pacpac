@@ -7,6 +7,7 @@
 --
 
 local draw = require('draw')
+local util = require('util')
 
 local Character = {} ; Character.__index = Character
 
@@ -30,6 +31,7 @@ function Character:reset()
   self.dead_till = -1
   self.mode = 'normal'  -- Can be 'freemove' for ghosts through the hotel door.
   self.eaten = false  -- To avoid ghosts being double eaten.
+  self.past_turns = {}
   local start_pos = level.start_pos[self.color]
   self.x = start_pos[1]
   self.y = start_pos[2]
@@ -109,6 +111,7 @@ function Character:target()
   end
 end
 
+-- TODO Is this needed anymore? Check.
 function Character:snap_into_place()
   if self.dir[1] == 0 then
     self.x = math.floor(2 * self.x + 0.5) / 2
@@ -125,10 +128,15 @@ function Character:can_go_in_dir(dir)
   return not xy_hits_a_wall(new_x, new_y, can_pass_hotel_door)
 end
 
-function Character:dot_prod(dir)
+function Character:turn_score(dir)
   local target = self:target()
   local target_dir = {target[1] - self.x, target[2] - self.y}
-  return target_dir[1] * dir[1] + target_dir[2] * dir[2]
+  local score = target_dir[1] * dir[1] + target_dir[2] * dir[2]
+  local past = self.past_turns[util.str({self.x, self.y})]
+  if past and util.str(past.dir) == util.str(dir) then
+    score = score - 5 * past.times
+  end
+  return score
 end
 
 -- Returns available directions, skipping u-turns unless it's the only choice.
@@ -147,7 +155,7 @@ end
 
 -- Switch self.dir to dir if it is more aligned with getting to the target.
 function Character:turn_if_better(turn)
-  if self:dot_prod(turn) > self:dot_prod(self.dir) then
+  if self:turn_score(turn) > self:turn_score(self.dir) then
     self.dir = turn
     self.last_turn = {self.x, self.y}
   end
@@ -177,7 +185,6 @@ function Character:update(dt)
     self.exit_time = math.huge
     self.dir = {0, -1}
   end
-
 
   local movement = dt * self:speed()
   while movement > 0 do
@@ -217,8 +224,19 @@ function Character:reached_grid_point()
     local dirs = self:available_dirs()
     self.dir = dirs[1]
     for k, t in pairs(dirs) do self:turn_if_better(t) end
+    self:register_turn()
   end
+end
 
+-- Records that we turned to self.dir at self.xy.
+function Character:register_turn()
+  local key = util.str({self.x, self.y})
+  local value = self.past_turns[key]
+  if value and util.str(value.dir) == util.str(self.dir) then
+    value.times = value.times + 1
+  else
+    self.past_turns[key] = {dir = self.dir, times = 1}
+  end
 end
 
 -- If a character is far to the left right, they jump across the map.
