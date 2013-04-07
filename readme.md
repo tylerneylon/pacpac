@@ -1,19 +1,27 @@
 # PacPac
 
-This is pac-man from a parallel universe.
+This is Pac-Man from a parallel universe.
 
 ![PacPac Title](https://raw.github.com/tylerneylon/pacpac/master/screenshots/title.png)
 
 ![PacPac Level Samples](https://raw.github.com/tylerneylon/pacpac/master/screenshots/level1_2.png)
 
-Right now there are 3 mazes to play through. This is thrice as
+There are 3 mazes to play through. This is thrice as
 many as the original pac-man :)
 
-You need the [löve](http://love2d.org) game engine to play.
+You need the [löve](http://love2d.org) game engine to play - at least version 0.8.0.
 
 The original code was written in under 24 hours as a challenge.
 My wife didn't believe I could make a pac-man-like game in a day.
 Here's a fun [first 24-hour evolution of the game in screenshots](http://tylerneylon.com/pacpac/).
+
+## How to install and run
+
+1. Download and install [löve](http://love2d.org). (Older versions before 0.8.0 won't work.)
+2. Download and unzip the [zipfile of this repo](https://github.com/tylerneylon/pacpac/archive/master.zip).
+3. Double-click the file `pacpac.love`.
+   Alternatively, in OS X and Ubuntu, type `love pacpac.love` from the command line - which assumes
+   the `love` executable is in your path.
 
 ## Level Editing
 
