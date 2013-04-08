@@ -29,6 +29,12 @@ I've set up the game so that you can make your own levels without having to know
 Just edit `level1.txt` or any other `levelN.txt` file to change that level. The file format is
 explained within those files, and this format is designed to be human-friendly and flexible.
 
+If you're running PacPac using `pacpac.love`, then you need to run
+`make_love_file.sh` before the level changes will show up in the game. This
+shell script is meant to be run from the command line by cd'ing into your pacpac
+directory (the one containing `make_love_file.sh`) and typing the command
+`./make_love_file.sh`.
+
 ## Contributions
 
 It would be awesome if other coders contributed more levels. I'd like each level to add something
