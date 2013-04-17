@@ -11,7 +11,8 @@ local util = require('util')
 
 -- TODO Remove this once we have more confidence the bug is fixed.
 function ask_to_report_error()
-  s = 'Please report this error on this thread: '
+  s = 'Please report this error and version number: ' .. version
+  s = s .. ' on this thread: '
   s = s .. 'https://github.com/tylerneylon/pacpac/issues/7'
   print(s)
 end

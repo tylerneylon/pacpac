@@ -15,6 +15,8 @@ local util = require('util')
 -- Declare all globals here.
 -------------------------------------------------------------------------------
 
+version = "0.301"
+
 map = nil
 num_levels = 3
 
