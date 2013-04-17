@@ -9,6 +9,13 @@
 local draw = require('draw')
 local util = require('util')
 
+-- TODO Remove this once we have more confidence the bug is fixed.
+function ask_to_report_error()
+  s = 'Please report this error on this thread: '
+  s = s .. 'https://github.com/tylerneylon/pacpac/issues/7'
+  print(s)
+end
+
 local Character = {} ; Character.__index = Character
 
 -- shape is 'hero' or 'ghost'; color is in {'red', 'pink', 'blue', 'orange'}.
@@ -128,6 +135,24 @@ function Character:can_go_in_dir(dir)
   return not xy_hits_a_wall(new_x, new_y, can_pass_hotel_door)
 end
 
+-- Only returns true for u-turns or when pac-pac is at a grid point, which is
+-- common when he is stopped.
+function Character:can_turn_right_now(dir)
+  if not self:can_go_in_dir(dir) then return false end
+
+  -- Allow legit turns at grid points.
+  if self.x - math.floor(self.x) == 0.5 and
+     self.y - math.floor(self.y) == 0.5 then
+    return true
+  end
+
+  -- Allow u-turns anywhere.
+  for i = 1, 2 do
+    if dir[i] ~= -self.dir[i] then return false end
+  end
+  return true
+end
+
 function Character:turn_score(dir)
   local target = self:target()
   local target_dir = {target[1] - self.x, target[2] - self.y}
@@ -163,6 +188,17 @@ end
 
 function Character:next_grid_point()
   local pt = {self.x, self.y}
+
+  -- TODO Remove this once we have more confidence it doesn't happen.
+  local num_bad = 0
+  for i = 1, 2 do
+    if pt[i] - math.floor(pt[i]) ~= 0.5 then num_bad = num_bad + 1 end
+  end
+  if num_bad == 2 then
+    print('Error: bad coordinate <' .. self.shape .. '> (' .. self.x .. ', ' .. self.y .. ')')
+    ask_to_report_error()
+  end
+
   for i = 1, 2 do
     -- This if block is more readable than a short but opaque mathy summary.
     if self.dir[i] == 1 then
@@ -171,6 +207,7 @@ function Character:next_grid_point()
       pt[i] = math.ceil(pt[i] - 0.5) - 0.5
     elseif self.dir[i] ~= 0 then
       print('Error: Unexpected dir value (' .. self.dir[i] .. ') found.')
+      ask_to_report_error()
     end
   end
   return pt
@@ -181,6 +218,20 @@ function Character:update(dt)
 
   -- Check if it's time for a ghost to exit the ghost hotel.
   if self.shape == 'ghost' and self.exit_time < clock then
+
+    -- TODO Remove this once we have more confidence it doesn't happen.
+    local pt = {self.x, self.y}
+    local num_bad = 0
+    for i = 1, 2 do
+      if pt[i] - math.floor(pt[i]) ~= 0.5 then num_bad = num_bad + 1 end
+    end
+    if num_bad > 0 then
+      print('Error: ghost turn triggered when not on a grid point')
+      print('Current position=(' .. self.x .. ', ' .. self.y .. ')')
+      print('Current dir=(' .. self.dir[1] .. ', ' .. self.dir[2] .. ')')
+      ask_to_report_error()
+    end
+    
     self.mode = 'freemove'
     self.exit_time = math.huge
     self.dir = {0, -1}
@@ -189,7 +240,7 @@ function Character:update(dt)
   local movement = dt * self:speed()
   while movement > 0 do
     -- This is inside the loop because the hero can hit a wall and stop.
-    if self.dir[1] == 0 and self.dir[2] == 0 then return end
+    if self.dir[1] == 0 and self.dir[2] == 0 then break end
 
     local pt = self:next_grid_point()
     local dist = self:dist_to_pt(pt)
@@ -204,7 +255,6 @@ function Character:update(dt)
   end
 
   self:check_for_side_warps()
-  self:check_if_done_exiting_hotel()
   self:register_dots_eaten()
 end
 
@@ -221,6 +271,22 @@ function Character:reached_grid_point()
   end
 
   if self.shape == 'ghost' then
+
+    -- Handle movements around the ghost hotel door.
+    local can_pass_hotel_door = (self.mode == 'freemove' or self:is_dead())
+    local t = self:target()
+    if can_pass_hotel_door and self.x == t[1] and self.y == t[2] then
+      if self:is_dead() then
+        self.dir = {0, -1}
+        self.dead_till = clock
+        self.mode = 'freemove'
+        self.eaten = true
+      else
+        self.mode = 'normal'
+      end
+    end
+
+    -- Handle standard movements (not into/out of the ghost hotel).
     local dirs = self:available_dirs()
     self.dir = dirs[1]
     for k, t in pairs(dirs) do self:turn_if_better(t) end
@@ -247,21 +313,6 @@ function Character:check_for_side_warps()
   elseif self.x >= #map + 1.5 then
     self.x = 0.5
     self.dir = {1, 0}
-  end
-end
-
-function Character:check_if_done_exiting_hotel()
-  if self.shape ~= 'ghost' then return end
-  local can_pass_hotel_door = (self.mode == 'freemove' or self:is_dead())
-  if can_pass_hotel_door and self:dist_to_pt(self:target()) < 0.1 then
-    if self:is_dead() then
-      self.dir = {0, -1}
-      self.dead_till = clock
-      self.mode = 'freemove'
-      self.eaten = true
-    else
-      self.mode = 'normal'
-    end
   end
 end
 

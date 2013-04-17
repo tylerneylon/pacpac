@@ -492,7 +492,7 @@ end
 function dir_request(dir)
   if dir == nil then return end
   if man == nil then return end
-  if man:can_go_in_dir(dir) then
+  if man:can_turn_right_now(dir) then
     man.dir = dir
   else
     man.next_dir = dir
