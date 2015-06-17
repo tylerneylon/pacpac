@@ -290,7 +290,7 @@ function xy_hits_a_wall(x, y, can_pass_hotel_door)
   local pts = pts_hit_by_man_at_xy(x, y)
   for k, v in pairs(pts) do
     if v[1] >= 1 and v[1] <= #map then
-      local m = map[v[1]][v[2]] 
+      local m = map[v[1]][v[2]]
       if m == 1 then return true end
       if m == 3 and not can_pass_hotel_door then return true end
     end
@@ -408,7 +408,7 @@ function check_for_hit()
         pause_till = math.huge
 
         characters = {man}
-        
+
         death_anim_till = clock + death_anim_time
         life_start_time = pause_till
         set_weeoo(1)
@@ -440,7 +440,7 @@ function game_ended()
 end
 
 function draw_message()
-  if show_message_till < clock then return end 
+  if show_message_till < clock then return end
   draw.setColor(255, 255, 255)
   love.graphics.setFont(large_font)
   local t = 14  -- Tweak the positioning.
@@ -509,7 +509,8 @@ end
 
 function check_jstick_if_present()
   if not jstick then return end
-  x, y = love.joystick.getAxes(1)
+  joystick = love.joystick.getJoysticks()[1]
+  x, y = joystick:getAxes()
   -- Discard low-volume movements.
   if math.max(math.abs(x), math.abs(y)) < 0.5 then return end
   -- Discretize the direction.
@@ -596,7 +597,7 @@ function setup_level()
 
   -- This will be a hash set of all dot locations.
   dots = {}
- 
+
   -- Inner functions to help find the dot locations.
   -- The input x, y is the integer square location in tile coordinates.
   function add_dots(x, y)
@@ -967,9 +968,12 @@ function love.load()
 
   events.add(0.5, play_start_screen_music)
 
-  jstick = (love.joystick.getNumJoysticks() > 0)
+  jstick = (love.joystick.getJoystickCount() > 0)
   if jstick then
-    print('Detected ' .. love.joystick.getName(1))
+    local joysticks = love.joystick.getJoysticks()
+    for i, joystick in ipairs(joysticks) do
+        print('Detected ' .. joystick:getName())
+    end
   else
     print('No gamepad detected.')
   end

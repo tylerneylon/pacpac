@@ -9,6 +9,6 @@ function love.conf(t)
   t.url = 'https://github.com/tylerneylon/pacpac'
   t.identity = 'pacpac'
 
-  t.screen.width = 1280
-  t.screen.height = 720
+  t.window.width = 1280
+  t.window.height = 720
 end
