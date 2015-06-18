@@ -9,7 +9,8 @@ This is Pac-Man from a parallel universe.
 There are 3 mazes to play through. This is thrice as
 many as the original pac-man :)
 
-You need the [löve](http://love2d.org) game engine to play - at least version 0.8.0.
+You need the [löve](http://love2d.org) game engine to play. The current code is written for löve
+v0.9.2.
 
 The original code was written in under 24 hours as a challenge.
 My wife didn't believe I could make a pac-man-like game in a day.
@@ -17,7 +18,7 @@ Here's a fun [first 24-hour evolution of the game in screenshots](http://tylerne
 
 ## How to install and run
 
-1. Download and install [löve](http://love2d.org). (Older versions before 0.8.0 won't work.)
+1. Download and install [löve](http://love2d.org). (Current code has been tested with löve v0.9.2.)
 2. Download and unzip the [zipfile of this repo](https://github.com/tylerneylon/pacpac/archive/master.zip).
 3. Double-click the file `pacpac.love`.
    Alternatively, in OS X and Ubuntu, type `love pacpac.love` from the command line - which assumes
@@ -92,7 +93,7 @@ In the original game, you also get an extra life once you reach a
 certain score. This is a nice feature that we could include
 in PacPac.
 
-#### Game reply
+#### Game replay
 
 Automatically save all the effective commands the user provides so that
 we can exactly replay that game as a watch-only experience. Maybe this
@@ -125,3 +126,6 @@ This game uses the font 8bitoperator created by
 [GrandChaos9000](http://grandchaos9000.deviantart.com/)
 (aka Jayvee D. Enaguas) and is distributed under the
 [CC-BY-SA](http://creativecommons.org/licenses/by-sa/2.0/) license.
+
+Thanks to [jonfk](https://github.com/jonfk) for upgrading the code
+for löve v0.9.2.
